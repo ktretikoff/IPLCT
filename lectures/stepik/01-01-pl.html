@@ -1,0 +1,79 @@
+<p><br />
+Starting a course on programming languages and compilers it makes sense first to stipulate what programming languages are. In a nutshell, programming languages are languages for writing computer programs. While looking vacuous, this definition nevertheless discovers an important observation: since programming languages are <em>languages</em>, i.e. <em>sign systems</em>, to reason about programming languages we can apply the notions and terminology of <em>semiotics</em>, a branch of science dealing with sign systems.</p>
+
+<p style="text-align:center"><img alt="Charles William Morris (1901-1979)" height="439" name="morris.jpg" src="https://ucarecdn.com/14ff7ca8-74b7-4c0f-a467-702dd7ba48bf/" width="352" /></p>
+
+<p style="text-align:center">Charles William Morris (1901-1979)</p>
+
+<p>One of the founders of semiotics, Charles William Morris, has identified the following important notions:</p>
+
+<ul>
+	<li>Syntax~--- relations between the signs of sign system themselves.</li>
+	<li>Semantics~--- relations between a sign system and objects.</li>
+	<li>Pragmatics~--- relations between a sign system and a person.</li>
+</ul>
+
+<p>In a narrower context of programming languages syntax denotes the form of program representation, semantics~--- the &ldquo;meaning&rdquo; of programs, and pragmatics~--- the relation between programming language and developer. In our course we focus mainly on syntax and semantics, putting all pragmatics questions aside.</p>
+
+<pre>
+
+&nbsp;</pre>
+
+<h2 style="text-align:center">Syntax</h2>
+
+<p>Similarly to natural languages, the syntax of a programming language can be decomposed into a few levels (lexical structure, grammar, etc.) However, unlike natural languages, which have been evolving more or less spontaneously, the syntax for a programming language is intelligently designed taking into account a number of specific requirements;in particular, it is (as a rule) <em>unambiguous</em> and allows for efficient analysis. To illustrate the concept of programming language syntax consider the following simple snippet in C:</p>
+
+<p><img alt="" height="29" name="01-01.png" src="https://ucarecdn.com/aef25001-6727-473b-875a-ebc374db9797/" width="487" /></p>
+
+<p>From the <em>lexical</em> standpoint this fragment can be seen as a sequence of <em>tokens</em> (a keyword, a delimiter, an identifier, a binary operator, a decimal constant, etc.):</p>
+
+<p style="text-align:center"><img alt="" height="248" name="01-02.png" src="https://ucarecdn.com/271aaed6-97b7-42d3-9f66-f68b6a22461a/" width="487" /></p>
+
+<pre>
+This sequence of tokens, in turn, is grouped into an hierarchy of syntactic constructs (in this case, expressions and operators):
+
+</pre>
+
+<p style="text-align:center"><img alt="" height="141" name="01-03.png" src="https://ucarecdn.com/942b54e4-fb8c-4957-8c80-95621a4bbad9/" width="445" /></p>
+
+<h2 style="text-align:center">Semantics</h2>
+
+<p>The drastic difference between natural and programming languages manifests itself in a full bloom on the semantic level. Unlike natural languages, for programming languages there are ways to formally specify their semantics and acquire a <em>mathematically proven</em> results. Why formal semantics matters? While in a common practice of using programming languages for application-level software we can rely on our vague, fuzzy understanding of the meanings of their constructs, when we develop system-level programming <em>tools</em>, in particular, compilers, this understanding turns out to be insufficient. Imagine, for example, that we know that in some programming language expressions consist of variables, constant and four arithmetic operators. Is this knowledge is complete? Let us have the following expressions:</p>
+
+<p><code>0*(x/0)<br />
+1+x-x </code></p>
+
+<p>What should be the results of their evaluation? In the first sample, on one hand, the multiplication to zero always gives zero; on the other hand, the division by zero is undefined. So, would the result of the expression be zero or undefined? In the second sample, we add a value of <code>x</code> <code>1</code> and immediately subtract it. On one hand this would give us <code>1</code>; on the other hand, the value of <code>x</code> can be undefined, or adding <code>x</code> to <code>1</code> might lead to an overflow. So it remains unclear if we can replace <code>1+x-x</code> with <code>1</code> while preserving the behaviour of the program in all cases.</p>
+
+<p>Even if we cannot come up with definite oral answers to these questions we still can write programs using this language; after all, we always can see what happens in each case if we have a compiler. But what should we do if our task is to implement the \emph{first} compiler for this language? What happens if we ask a dozen of people to implement a dozen of compilers independently? Would all these compilers agree in their semantics, or, perhaps, we eventually will have a dozen of <em>different</em> compilers since their authors have <em>different</em> intuition?</p>
+
+<p>One may argue that all these samples come from a very rare and unrealistic use cases. Indeed, how often a new compiler is created, let alone a dozen of those? And those snippets with &ldquo;murky&rdquo; semantics look like antipatterns: why on earth a sane developer would write &ldquo; <code>0*(x/0)</code>&rdquo; instead of &ldquo; <code>0</code>&rdquo; or &ldquo;<code>1+x-x</code>&rdquo; instead of &ldquo;<code>1</code>&rdquo;?</p>
+
+<p>The answer, somewhat unexpected, is that actually all these cases are rather <em>general</em> then exceptional. Of course, implementing a completely new compiler from scratch is not an everyday task; however, at the same time programming languages and compilers are rarely developed &ldquo;once and for all&rdquo;. As a rule, both languages and their compilers evolve through time: new constructs are being added to languages, and new features are being implemented in compilers. Carrying out all of these routine tasks require a strong semantic foundations. Besides this, compilers by no means are the only semantic-sensitive development instruments: there is an abundance of other important tools like IDEs, model checkers, static analyzers, debuggers, profilers, etc., all of which have to interpret the semantics of programs in a coherent way.</p>
+
+<p>Then, not all programs are written directly by human beings. Actually, a fair share of them are generated by other tools, in particular, <em>preprocessors</em> or other <em>metaprogramming</em> tools. The results of metaprogramming as a rule look exactly like the samples discussed above: they contain a lot of vacuous use of constructs and programming language features, and it is <em>expected</em> from the underlying compiler to clean up this mess in a semantics-preserving manner.</p>
+
+<p>Finally, for a compiler there is nothing &ldquo;weird&rdquo; in those code samples. The reason is simple: compilers do not have intuition. They just routinely convert program texts into executables no matter how weird they would look from a human being point of view. To illustrate this, consider the following short program in <b>C</b>:</p>
+
+<p><code>m(f,a,s)char*s; {char c;return f&amp;1?a!=*s++?m(f,a,s):s[11]:f&amp;2?a!=*s++?<br />
+1+m(f,a,s):1:f&amp;4?a--?putchar(*s),m(f,a,s):a:f&amp;8?*s?<br />
+m(8,32,(c=m(1,*s++,&quot;Arjan Kenter. \no$../.\&quot;&quot;),<br />
+m(4,m(2,*s++,&quot;POCnWAUvBVxRsoqatKJurgXYyDQbzhLwkNjdMT&quot;<br />
+&quot;GeIScHFmpliZEf&quot;),&amp;c),s)):65:(m(8,34,&quot;rgeQjPruaOnDaP&quot;<br />
+&quot;eWrAaPnPrCnOrPaPnPjPrCaPrPnPrPaOrvaPndeOrAnOrPnOrPn&quot;<br />
+&quot;OaPnPjPaOrPnPrPnPrPtPnPrAaPnBrnnsrnnBaPeOrCnPrOnCaP&quot;<br />
+&quot;nOaPnPjPtPnAaPnPrPnPrCaPnBrAnxrAnVePrCnBjPrOnvrCnxr&quot;<br />
+&quot;AnxrAnsrOnvjPrOnUrOnornnsrnnorOtCnCjPrCtPnCrnnirWtP&quot;<br />
+&quot;nCjPrCaPnOtPrCnErAnOjPrOnvtPnnrCnNrnnRePjPrPtnrUnnr&quot;<br />
+&quot;ntPnbtPrAaPnCrnnOrPjPrRtPnCaPrWtCnKtPnOtPrBnCjPronC&quot;<br />
+&quot;aPrVtPnOtOnAtnrxaPnCjPrqnnaPrtaOrsaPnCtPjPratPnnaPr&quot;<br />
+&quot;AaPnAaPtPnnaPrvaPnnjPrKtPnWaOrWtOnnaPnWaPrCaPnntOjP&quot;<br />
+&quot;rrtOnWanrOtPnCaPnBtCjPrYtOnUaOrPnVjPrwtnnxjPrMnBjPr&quot;<br />
+&quot;TnUjP&quot;),0);}<br />
+main(){return m(0,75,&quot;mIWltouQJGsBniKYvTxODAfbUcFzSp&quot;<br />
+&quot;MwNCHEgrdLaPkyVRjXeqZh&quot;);} </code></p>
+
+<p>If you have any doubts if this is a valid <b>C</b> program, compile and run it.
+<b>C</b> is never considered as particularly hard to understand or syntactically challenging (both arguable),
+yet the program presented is totally incomprehensible.
+Actually, it was specifically designed to be such: there is a whole competition in writing <a href="https://www.cise.ufl.edu/$\tilde\,$manuel/obfuscate/obfuscate.html"><em>obfuscated</em> code</a>. For us, however, the important observation is that this program no more obfuscated for a compiler as any other one. Our job as compiler implementors is to make them behave in such a way.</p>
