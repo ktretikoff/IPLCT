@@ -1,0 +1,21 @@
+<h2 style="text-align:center">The Essence of Translation</h2>
+
+<p><em>Translation</em> is a syntactic transformation of programs in one language into (equivalent) programs into another. The feasibility of fully automatic translation constitutes a drastic difference between programming languages and natural ones. Although natural language translation techniques and tools made tremendous progress in a recent years the adequacy of the results remains the matter of discussion; and, anyway, this adequacy can not be mathematically proven. For compilers this problem is essentially solved.</p>
+
+<p>A compiler itself is not a magical creature &ndash; it is a <em>program</em>, written, in turn, in some programming language. Thus, speaking about compilation, we actually deal with <em>three</em> languages:</p>
+
+<p style="text-align:center"><img alt="" height="260" name="image.png" src="https://ucarecdn.com/b3b0f275-e9b9-48fe-bd4a-ccdd1e4fca74/" width="673" /></p>
+
+<ul>
+  <li>The language in which the programs being compiled are written (<em>source language).</em></li>
+  <li><em>The language in which the programs being compiled are compiled (<em>target language). </em></em></li>
+  <li><em><em>The language in which the compiler from source to target language is written (<em>compiler implementation language).</em> </em></em></li>
+</ul>
+
+<h2 style="text-align:center"><em><em><em><em><em>Translation Subspecies</em></em></em></em></em></h2>
+
+<p>As you probably know, there is a subdivision of languages into high- and low-level. This subdivision is not absolute: for example, <strong>Haskell</strong> is considered by many as more high-level language than <strong>C</strong>, which, in turn, is of higher level then <strong>Fortran</strong>, etc. As a rule, high-level languages are equipped with type systems, while low-level are not (but <strong>Scheme</strong> is untyped while there exist typed assemblers). This coarse-grained classification of languages leads to a corresponding coarse-grained classification of translators:</p>
+
+<p style="text-align:center"><img alt="" height="239" name="01-05.png" src="https://ucarecdn.com/50cfa3bf-58c3-457b-85e2-7737048507dd/" width="429" /></p>
+
+<p>There is somewhat common knowledge that among all these subspecies compilers are the most challenging to implement. While we generally agree, it&#39;s worth mentioning that the other kinds of translators are not pieces of cakes at all: for example, it is expected from a decompiler or convertor to properly utilize the abstractions of the target language, to produce a human-readable maintainable results, etc.</p>
