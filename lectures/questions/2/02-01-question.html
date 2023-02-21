@@ -1,0 +1,67 @@
+Languages and Semantics
+1. <p>We have semantics <span class="math-tex">\([\![ \displaystyle{\textbf{p}} ]\!]=\{abc\}\)</span> for the language <span class="math-tex">\(\mathcal{L}\)</span>.</p>
+
+<p>Then the mapping <span class="math-tex">\([\![ \bullet ]\!]_{\mathcal L} : \mathcal L \to \mathcal D\)</span>&nbsp;for the program</p>
+
+<pre>
+fun main() {
+  println(&quot;def&quot;)
+}
+</pre>
+
+<p>will return value:</p>
+
+
+Answer: abc
+
+2. Connect the transformation with its definition
+Interpreter - A program pm (written in a language M), which takes a program pl: D1 → D2 (written in a language L) and data value D1 and returns data value D2
+Compiler - A program pm (written in a language M), which takes a program pl: D1 → D2 (written in a language L), and returns a program pn: D1 → D2 (written in a language N)
+Specializer - A program pm (written in a language M), which takes a program pl: D1 → D2 → D3 (written in a language L) and data value D1, and returns a program pl1: D2 → D3 (written in a language L)
+Self-interpreter - A program pm (written in a language M), which takes a program pm1: D1 → D2 (written in a language M) and data value D1 and returns data value D2
+
+
+3. We have a correct transformation f. Then we definitely know that for all x, y ∈ D, if [[f(p)]] x = y, then
++ [[f(p)]] x = y
++ [[p]]x = y
++ [[p]] = [[f(p)]]
++ [[p]]x = [[f(p)]]x
+- [[p]]y = x
+- [[f(p)]]y = x
+- x = y
+
+4. We have a partially correct transformation f. Then we definitely know that for all x, y ∈ D, if [[f(p)]] x = y, then
++ [[f(p)]] x = y
+- [[p]]x = [[f(p)]]x
+- [[p]]x = y
+- [[p]] = [[f(p)]]
+- [[p]]y = x
+- [[f(p)]]y = x
+- x = y
+
+
+5. We have a partially correct transformation f. Then we definitely know that for all x, y ∈ D, if [[p]] x = y, then
++ [[f(p)]] x = y
++ [[p]]x = y
++ [[p]]x = [[f(p)]]x
+- [[p]] = [[f(p)]]
+- [[p]]y = x
+- [[f(p)]]y = x
+- x = y
+
+
+------
+6.
+In this step we will upgrade our AST interpreter and add variables into it.
+For this we will add a statement node
+
+
+7.
+<p>In this lesson we will create a specializer based AST interpreter.</p>
+<p>To do this we will need to add variables to our language. AST for the variable <code>x</code> will look like <code>VAR("x")</code>. The binary operator using this variable: <code>BINOP("*", VAR("x"), CONST(3))</code></p>
+<p>For now we will have a list of variable names and a program as an input for our program. The task is to return a program, which will substitute all the variables with constants.</p>
+Input:
+["x": 1, "y": 2]
+BINOP("*", VAR("x"), BINOP("+", VAR("y"), VAR("z"))
+Output:
+BINOP("*", CONST(1), BINOP("+", CONST(2), VAR("z"))

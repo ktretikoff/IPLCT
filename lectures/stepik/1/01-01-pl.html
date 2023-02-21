@@ -1,6 +1,6 @@
 <p><br />
 Starting a course on programming languages and compilers it makes sense first to stipulate what programming languages are. In a nutshell, programming languages are languages for writing computer programs. While looking vacuous, this definition nevertheless discovers an important observation: since programming languages are <em>languages</em>, i.e. <em>sign systems</em>, to reason about programming languages we can apply the notions and terminology of <em>semiotics</em>, a branch of science dealing with sign systems.</p>
-
+<!--Prerequisite - functional programming, functions-->
 <p style="text-align:center"><img alt="Charles William Morris (1901-1979)" height="439" name="morris.jpg" src="https://ucarecdn.com/14ff7ca8-74b7-4c0f-a467-702dd7ba48bf/" width="352" /></p>
 
 <p style="text-align:center">Charles William Morris (1901-1979)</p>
@@ -8,16 +8,12 @@ Starting a course on programming languages and compilers it makes sense first to
 <p>One of the founders of semiotics, Charles William Morris, has identified the following important notions:</p>
 
 <ul>
-	<li>Syntax~--- relations between the signs of sign system themselves.</li>
-	<li>Semantics~--- relations between a sign system and objects.</li>
-	<li>Pragmatics~--- relations between a sign system and a person.</li>
+	<li>Syntax — relations between the signs of sign system themselves.</li>
+	<li>Semantics — relations between a sign system and objects.</li>
+	<li>Pragmatics — relations between a sign system and a person.</li>
 </ul>
 
-<p>In a narrower context of programming languages syntax denotes the form of program representation, semantics~--- the &ldquo;meaning&rdquo; of programs, and pragmatics~--- the relation between programming language and developer. In our course we focus mainly on syntax and semantics, putting all pragmatics questions aside.</p>
-
-<pre>
-
-&nbsp;</pre>
+<p>In a narrower context of programming languages syntax denotes the form of program representation, semantics — the &ldquo;meaning&rdquo; of programs, and pragmatics — the relation between programming language and developer. In our course we focus mainly on syntax and semantics, putting all pragmatics questions aside.</p>
 
 <h2 style="text-align:center">Syntax</h2>
 
@@ -45,7 +41,7 @@ This sequence of tokens, in turn, is grouped into an hierarchy of syntactic cons
 
 <p>What should be the results of their evaluation? In the first sample, on one hand, the multiplication to zero always gives zero; on the other hand, the division by zero is undefined. So, would the result of the expression be zero or undefined? In the second sample, we add a value of <code>x</code> <code>1</code> and immediately subtract it. On one hand this would give us <code>1</code>; on the other hand, the value of <code>x</code> can be undefined, or adding <code>x</code> to <code>1</code> might lead to an overflow. So it remains unclear if we can replace <code>1+x-x</code> with <code>1</code> while preserving the behaviour of the program in all cases.</p>
 
-<p>Even if we cannot come up with definite oral answers to these questions we still can write programs using this language; after all, we always can see what happens in each case if we have a compiler. But what should we do if our task is to implement the \emph{first} compiler for this language? What happens if we ask a dozen of people to implement a dozen of compilers independently? Would all these compilers agree in their semantics, or, perhaps, we eventually will have a dozen of <em>different</em> compilers since their authors have <em>different</em> intuition?</p>
+<p>Even if we cannot come up with definite oral answers to these questions we still can write programs using this language; after all, we always can see what happens in each case if we have a compiler. But what should we do if our task is to implement the <em>first</em> compiler for this language? What happens if we ask a dozen of people to implement a dozen of compilers independently? Would all these compilers agree in their semantics, or, perhaps, we eventually will have a dozen of <em>different</em> compilers since their authors have <em>different</em> intuition?</p>
 
 <p>One may argue that all these samples come from a very rare and unrealistic use cases. Indeed, how often a new compiler is created, let alone a dozen of those? And those snippets with &ldquo;murky&rdquo; semantics look like antipatterns: why on earth a sane developer would write &ldquo; <code>0*(x/0)</code>&rdquo; instead of &ldquo; <code>0</code>&rdquo; or &ldquo;<code>1+x-x</code>&rdquo; instead of &ldquo;<code>1</code>&rdquo;?</p>
 

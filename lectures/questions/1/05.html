@@ -1,0 +1,103 @@
+1. Match the representation of the program with its content
+
+<em>Abstract Syntax Tree</em>:
+<pre>
+If (<br/>
+    Binop (">", Var("x"), Var("y")),<br/>
+)
+</pre>
+
+<em>Stack Machine Code</em>:
+<pre>
+BEGIN;<br/>
+LD 5;<br/>
+LD 1;<br/>
+BINOP ("+");<br/>
+ST ("x");<br/>
+END;
+</pre>
+
+<em>Static Single Assignment</em>,
+<pre>
+var x_1 = 5;<br/>
+println(x_1);<br/>
+var x_2 = x_1 + 1;<br/>
+println(x_2);
+</pre>
+
+2. Select frontend passes of compilation:
+- syntax analysis — checks whether the given input is in the correct syntax
+- type checking — verifying and enforcing constraints of types in values
+- name resolution — resolution of the tokens within program expressions to the intended program components.
+
+3. Select backend passes of compilation:
+
+- instruction selection — transforming compiler intermediate representation to the native code
+- register allocation — process of assigning local automatic variables and expression results to a limited number of processor registers
+- instruction scheduling — optimization to improve instruction-level parallelism
+- dead code elimination — optimization that removes code which does not affect the program results
+
+4. TODO
+
+
+5.
+<p>In this lesson we will work as part of a compiler. </p>
+<p>Our job is to remove all the dead code in the program. The source program given in a form of stack machine instructions. We will need to remove all the lines, which contain work with the variables, which are not used in the printed or return result.</p>
+<p>We use the following statements, followed by semicolon:</p>
+
+<ul>
+<li>Assignment <code>var &lt;name&gt; = &lt;expression&gt;</code></li>
+<li>Print function <code>print(&lt;expression&gt;)</code></li>
+<li>return <code>return &lt;expression&gt;</code></li>
+</ul>
+
+<p>where &lt;expression&gt; is either a number or a variable </p>
+
+
+
+
+<pre>
+<code>var x = 5;
+var y = 6;
+var z = 9;
+print(z);
+print(5);
+return 5;</code>
+</pre>
+
+<p>Output:</p>
+
+<pre>
+<code>var y = 6;
+var z = 9;
+print(z);
+print(5);
+return y;</code>
+</pre>
+
+
+
+2.
+
+Let's dive into the syntax of stack machine code.
+Connect the λaMa source program with its stack machine code representation:
+
+<pre>var x = 5;<br/>printf ("Hello")</pre>
+<pre>CONST (5)<br/>ST ("x")<br/>STRING ("Hello")<br/>CALL ("Lprintf", 1, false)</pre>
+
+
+
+<pre>var x = "Hello";<br/>printf (x)</pre>
+<pre>STRING ("Hello")<br/>ST ("x")<br/>LD ("x") <br/>CALL ("Lprintf", 1, false)</pre>
+
+
+
+<pre>var x = "Hello";<br/>printf ("Hello")</pre>
+<pre>STRING ("Hello")<br/>ST ("x")<br/>STRING ("Hello")<br/>CALL ("Lprintf", 1, false)</pre>
+
+
+1. Sort the program representations as they would appear in the compilation process
+
+<pre>if (x > 5) then 5 else x</pre>
+<pre>If (<br/>     Binop (">", Var("x"), Var("y")),<br/> ) </pre>
+<pre>pushl %ebx<br/>call Bstring<br/>addl $4, %esp<br/>movl %eax, %ebx</pre>

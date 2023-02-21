@@ -93,7 +93,7 @@ practical standpoint.
 \begin{figure}[t]
 \[
 \begin{array}{rcl}
-  \sembr{z}^\ph_\mathscr{E} & = & \sigma \mapsto z \\  
+  \sembr{z}^\ph_\mathscr{E} & = & \sigma \mapsto z \\
   \sembr{x}^\ph_\mathscr{E} & = & \sigma \mapsto \sigma\,x \\
   \sembr{e_1\otimes e_2}^\ph_\mathscr{E} & = & \sigma \mapsto \sembr{e_2}^\ph_\mathscr{E}\,\sigma\oplus\sembr{e_2}^\ph_\mathscr{E}\,\sigma
 \end{array}
@@ -136,7 +136,7 @@ The correspondence between $\otimes$ and $\oplus$ is described by the following 
   $=$      & \lstinline|=|   \\
   $\ne$    & \lstinline|!=|  \\
   $\wedge$ & \lstinline|&&|  \\
-  $\vee$   & \lstinline/!!/ 
+  $\vee$   & \lstinline/!!/
 \end{tabular}
 \label{times-plus-tab}
 \end{center}
@@ -165,7 +165,7 @@ property we just established is \emph{functionality}. On the other hand, in the 
 another name: \emph{determinism}. Thus, the semantics in question is deterministic, meaning that evaluating any expression in a given state
 delivers at most one value. Non-deterministic semantics, according to which there can be multiple such values, seemingly are not
 compatible with our framework of semantic functions; nevertheless, such semantics exist, and there are ways to fix this incompatibility.
-Further we will deal only with deterministic semantics. 
+Further we will deal only with deterministic semantics.
 
 Another important property is \emph{compositionality}: the semantics of a construct is expressed in the terms of the semantics
 of its proper subconstructs. Indeed, the first two equations are \emph{axioms}, meaning, that no expressions containing semantic
@@ -193,11 +193,11 @@ following relation ``$\preceq$'' of one expression being a subexpression of anot
   e^\prime \preceq e\otimes e^\prime \\
   e\preceq e \\
   e^\prime\preceq e^{\prime\prime} \wedge e^{\prime\prime}\preceq e \Rightarrow e^\prime\preceq e
-\end{array}  
+\end{array}
 \]
 
 The first two lines define the \emph{immediate} subexpression relation while the last two~--- its \emph{reflexive-transitive}
-closure. For example, for the expression $(x+2)*y$ all its subexpression are $(x+2)*y$, $x+2$, $y$, $x$, and $2$. 
+closure. For example, for the expression $(x+2)*y$ all its subexpression are $(x+2)*y$, $x+2$, $y$, $x$, and $2$.
 
 \begin{lemma}[Strictness]
   For all $e$, $\sigma$ and $x$ if
@@ -275,7 +275,7 @@ description:
 
 \[
 \renewcommand{\arraystretch}{1}
-\begin{array}{rcl}  
+\begin{array}{rcl}
   \mathscr S & = & \mbox{\lstinline|skip|} \\
              &   & \mathscr X \mbox{\lstinline|:=|} \;\mathscr E \\
              &   & \mbox{\lstinline|read (|} \mathscr X \mbox{\lstinline|)|} \\
@@ -377,7 +377,7 @@ Evaluation relation connects a statement and two configurations: \emph{initial} 
 \transrel\subseteq \mathscr{C}\times\mathscr{S}\times\mathscr{C}
 \]
 
-We will use infix notation to denote the elements of evaluation relation: instead of 
+We will use infix notation to denote the elements of evaluation relation: instead of
 
 \[
 \inbr{c_1,\,s,\,c_2}\in\transrel
@@ -592,7 +592,7 @@ left- to right-hand part of the rules, while the rule for composition threads co
 \FloatBarrier
 
 Besides evaluation big-step operational semantics can also be used to \emph{prove} the properties of the programs. For example, we can prove, that for
-arbitrary $n,\, m\in\mathbb{N}$ 
+arbitrary $n,\, m\in\mathbb{N}$
 
 \[
 \sembr{\llang{read (x); read (y); z := x + y; write (z)}}^\ph_\mathscr{S}\,\inbr{n,\,m}=n+m
@@ -686,7 +686,7 @@ Note, we did not use anything besides the rule $\rulename{Seq}$, thus
 the associativity of composition does not depend on other rules and will hold as long as the rule $\rulename{Seq}$
 is kept in its current form.
 
-From what we've just proven it is immediately follows that for arbitrary $s_1,\,s_2,\,s_3$ 
+From what we've just proven it is immediately follows that for arbitrary $s_1,\,s_2,\,s_3$
 
 \[
 \sembr{\llang{$s_1$; ($s_2$; $\,s_3$)}}^\ph_\mathscr{S}=\sembr{\llang{($s_1$; $\,s_2$); $\,s_3$}}^\ph_\mathscr{S}
@@ -710,7 +710,7 @@ shorter than that number the evaluation never comes to a final configuration. Fo
 
 \end{lemma}
 
-\begin{proof}   
+\begin{proof}
 The proof goes by structural induction. For the base case we need to consider four simple statements and four corresponding semantics rules.
 By inspecting the rules $\rulename{Skip}$, $\rulename{Assign}$, and $\rulename{Write}$ we can conclude that neither of them touches input stream. Thus,
 if an evaluation according to these rules succesfully completes, then input streams of initial and final configurations are equal. This means that for these
@@ -956,7 +956,7 @@ Similarly, we can extend the application of renaming to statements:
     \]
 
     and the right-to-left direction will follow from left-to-right immediately.
-    
+
     The proof proceeds by structural induction.
 
     The base case is a constant or a variable. Since the semantics of constants does not depend on a state the
@@ -983,7 +983,7 @@ Similarly, we can extend the application of renaming to statements:
       \sembr{(l\,\theta)\oplus(r\,\theta)}\,(\sigma\circ\theta^{-1})&=&\mbox{(by the definition of $\sembr{\bullet}^\ph_\mathscr{E}$)}\\
       \sembr{l\,\theta}\,(\sigma\circ\theta^{-1})\otimes\sembr{r\,\theta}\,(\sigma\circ\theta^{-1})&=&\mbox{(by inductive hypotheses)}\\
       \sembr{l}\,\sigma\otimes\sembr{r}\,\sigma&=&\mbox{(by the condition of the claim)}\\
-      n&&      
+      n&&
     \end{array}
     \]
 
@@ -1004,7 +1004,7 @@ Similarly, we can extend the application of renaming to statements:
     \]
 
     Then, by the definition of ``$\transrel$'':
-    
+
     \[
     \trans{\inbr{\sigma\circ\theta^{-1},\,w}}{(\theta\,(x))\llang{:=}(e\,\theta)}{\inbr{(\sigma\circ\theta^{-1})[\theta\,(x)\gets\sembr{e\,\theta}^\ph_\mathscr{E}\,(\sigma\circ\theta^{-1})],\,w}}
     \]
@@ -1038,11 +1038,11 @@ Similarly, we can extend the application of renaming to statements:
     \]
 
     Thus, $\sigma^\prime=\sigma[x\gets\sembr{e}^\ph_\mathscr{E}]\circ\theta^{-1}$ which completes the proof for the assignment case.
-    
+
   \item Two remaining cases can be proven similarly using the observation that worlds are invariant under renaming.
-    
+
   \end{enumerate}
-  
+
   Finally, to prove the induction step we assume that $(\clubsuit)$ holds for statements $s_1$ and $s_2$ and we need
   to prove
 
@@ -1079,14 +1079,14 @@ Similarly, we can extend the application of renaming to statements:
   \trans{\inbr{\Lambda\circ\theta^{-1},\,\inbr{i,\,\epsilon}}}{s\,\theta}{\inbr{\sigma\circ\theta^{-1},\,w}}
   \]
 
-  But $\Lambda\circ\theta^{-1}=\Lambda$, which completes the proof since now we have 
+  But $\Lambda\circ\theta^{-1}=\Lambda$, which completes the proof since now we have
 
   \[
   \sembr{s}^\ph_\mathscr{E}\,i=\sembr{s\,\theta}^\ph_\mathscr{E}\,i
   \]
 
   for arbitrary $i$ by the definition of $\sembr{\bullet}^\ph_\mathscr{E}$.
-  
+
 \end{proof}
 
 \begin{comment}
@@ -1106,7 +1106,7 @@ First, we define the set of all \emph{free variables} $\fv{}$ in expression or s
   \fv{x\,\llang{:=}\,e}&=&\{x\}\cup\fv{e}\\
   \fv{\llang{read ($x$)}}&=&\{x\}\\
   \fv{\llang{write ($e$)}}&=&\fv{e}\\
-  \fv{s_1\llang{;}s_2}&=&\fv{s_1}\cup\fv{s_2}xs  
+  \fv{s_1\llang{;}s_2}&=&\fv{s_1}\cup\fv{s_2}xs
 \end{array}
 \]
 \end{comment}

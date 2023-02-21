@@ -1,0 +1,157 @@
+<h2>Shallow Embedding</h2>
+
+<p>Shallow embedding is an alternative way to implement one language "on top" of another. In contrast to deep embedding, when
+  we first construct a representation of a program being embedded and then run it on an interpreter, in shallow case we
+  represent the constructs of embedded language directly in an executable form. We demonstrate this technique by
+  repeating the job of implementing an embedding of a straight-line programs languages, but now in a shallow form. As
+  we dealing with the same language and the same semantics many ingredients of deep embedding  states, configurations, etc.
+  will be reused in the shallow case, so we can immediately start from implementing embedding of expressions.</p>
+
+<p>Remember, in the previous case we devised a representation of expressions' ASTs using S-expressions; this step, however, is
+  disallowed in shallow embedding. What we do instead is represent the constructs of an expressions directly as their
+  semantics. In out case the semantics of an expression is a function from states to integers, which means that under
+  shallow embedding each expression is represented by such a function.</p>
+
+<p>Let us have two expressions <code>l</code>
+  and <code>r</code>;
+  how can we build a shallow representation for, say, <code>l + r</code>?
+  Both <code>l</code>
+  and <code>r</code> are functions, and we have to construct a function which, given a state, returns
+  the sum of <code>l (st)</code>
+  and <code>r (st)</code>. This idea gives us the following hypothetical implementation of
+  binary addition encoding:</p>
+
+<pre><code>
+   infixl +  at +  (l, r) {
+     fun (st) {
+       l (st) + r (st)
+     }
+  }
+</code></pre>
+
+<p>There are, however, two technical difficulties. First, the base cases for expressions are natural numbers and variables. It would be
+  great to represent natural numbers as regular integer constants and variables as strings, but we need to represent them as functions.
+  We can deal with this problem in a similar way as in the deep embedding case: in every context we expect an expression we wrap it in a function
+  which tests for these corner cases and "lifts" integer constants and strings into functional domain:</p>
+
+<pre><code>
+   fun opnd (e) {
+     case e of
+       #str -> fun (st) {st (e)}
+     | #val -> fun (_)  {e}
+     | _    -> e
+     esac
+   }
+</code></pre>
+
+<p>Note, we did exactly the same in the deep embedding case, and for the same reason; the only difference is that now we lift
+  primitive expressions into different domain.</p>
+
+<p>The second problem is that, actually, "<code>+</code>"
+  inside the definition of "<code>+</code>" means itself, so instead
+  of adding two numbers our function is going to loop forever. In order to overcome this problem we have, first, to provide a
+  synonym to the build-in integer addition and, second, to place the redefinition of addition in a nested scope; we have to do this
+  for every binary operator we redefine:</p>
+
+<pre><code>
+   val add = infix +,
+       sub = infix -,
+       mul = infix *,
+       ...
+
+   (
+    infixl + at + (l, r) {
+      fun (st) {
+        add (opnd (l) (st), opnd (r) (st))
+      }
+    }
+
+    infixl - at - (l, r) {
+      fun (st) {
+        sub (opnd (l) (st), opnd (r) (st))
+      }
+    }
+
+    infixl * at * (l, r) {
+      fun (st) {
+        mul (opnd (l) (st), opnd (r) (st))
+      }
+    }
+    ...
+   )
+</code></pre>
+
+<p>This completes the shallow embedding of expressions. Now when we write an expression built from binary operators, strings and
+  constants its evaluation returns a representation of this expression in the form of a function from states to integers. For
+  example, an expression</p>
+
+<pre><code>
+   "y"*("x"+1)
+</code></pre>
+
+is evaluated into the function
+
+<pre><code>
+   fun (st) {
+     mul (fun (st) {st ("y")} (st),
+          fun (st) {
+            add (fun (st) {st ("x")} (st),
+                 fun (st) {1}        (st)
+            )
+          } (st)
+     )
+   }
+</code></pre>
+
+which can be simplified (by unfolding relevant definitions) into
+
+<pre><code>
+   fun (st) {st ("y") * (st ("x") + 1)}
+</code></pre>
+
+Now we do not need an interpreter to evaluate this expression; we can just call it passing a relevant state as an argument.
+
+<p>Let's repeat this job for statements. Again, all we need is to represent constructs by their semantics, this time
+  a function from configurations to configurations:</p>
+
+<pre><code>
+   fun sk1p (conf) {conf}
+
+   fun <TT>read</TT> (x) {
+     fun ([s, w]) {
+       let [n,w] = readWorld (w) in
+       [s <- [x, n], w]
+     }
+   }
+
+   fun <TT>write</TT> (e) {
+     fun ([s, w]) {
+       [s, writeWorld (w, opnd (e) (s))]
+     }
+   }
+
+   infix ::= before := (x, e) {
+     fun ([s, w]) {
+       [s <- [x, opnd (e)(s)], w]
+     }
+   }
+
+   infixr >> before ::= (s1, s2) {
+     fun (conf) {
+       s2 (s1 (conf))
+     }
+   }
+</code></pre>
+
+<p>Note, we could not encode <code>skip</code> statement with eponymous function since "skip" is a reserved word in &lambda;aMa, so we used
+  its contrived version "sk1p". Otherwise, we preserved the same surface syntax as with deep embedding.</p>
+
+<p>One may notice that this implementation resembles the implementation of an interpreter in deep embedding case. This is, indeed, the
+  case. In fact in shallow embedding we "fuse" representation and interpretation layers together, thus representation
+  inherits the implementation of interpreter.</p>
+
+<p>Thus, shallow embedding makes it possible to reduce interpretation overhead (but not eliminate is completely: we still
+  express the semantics in the terms of states and configurations with precisely the same encoding as in the
+  deep embedding case). On the other hand, shallow embedding makes it harder (but not completely impossible) to
+  implement <em>transformations</em> of embedded programs. Deep and shallow embeddings are two sides of the same coin, and
+  in different scenarios both of them can reveal their merits.</p>

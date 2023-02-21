@@ -1,0 +1,377 @@
+<!--\chapter{Straight Line Programs}-->
+
+<!--In this chapter we introduce the language of <em>straight line</em> programs which can be considered as the smallest-->
+<!--non-trivial subset of &lambda;aMa. In this subset all programs are executed sequentially statement by statement with-->
+<!--no branching. Thus, any program either comes to an end or stops due to an error, but cannot loop forever. We-->
+<!--use this simple language to showcase all the ingredients of our approach to language description: abstract and-->
+<!--concrete syntax specification, denotational and operational semantics, etc. We also introduce some components of-->
+<!--the compiler we will be working on: source-level interpreter, stack machine compiler and interpreter, and-->
+<!--<tt>x86</tt> code generator.-->
+
+
+<h1>Expressions</h1>
+
+
+Syntactically, our language incorporates two <em>syntactic categories</em>: expressions and statements. We start from describing
+so-called <em>abstract syntax</em>
+for the expression category. We consider a countable set of <em>variables</em>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \mathscr{X}=\{x_1,\,x_2,\,\dots\}
+\)</span></p>
+
+and a set of <em>binary operators</em>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \otimes= \{+,\, -,\, \times,\, /,\, \%,\, <,\, \le,\, >,\, \ge,\, =,\,\ne,\, \vee,\, \wedge\}
+\)</span></p>
+
+which contains all thirteen built-in &lambda;aMa operators. Then, the category of expressions <span class="math-tex">\(\mathscr{E}\)</span> can be defined by
+the following recursive scheme:
+
+<p style="text-align:center"><span class="math-tex">\(
+  \begin{array}{rcl}
+  \mathscr{E} & = & \mathscr{X} \\
+              &   & \mathbb{N} \\
+              &   & \mathscr{E}\otimes\mathscr{E}
+\end{array}
+\)</span></p>
+
+<p>
+This scheme defines a countable set of <em>labeled ordered trees</em> of finite height: each node of such a tree is labeled, and for any node the order
+of its immediate subtrees is essential. The simplest trees of this form are just leaves labeled with either variables or natural numbers; we simply
+write <span class="math-tex">\(\mathscr{X}\)</span>
+or <span class="math-tex">\(\mathbb{N}\)</span>
+in the first two lines of definition of <span class="math-tex">\(\mathscr{E}\)</span>, but actually we mean tree nodes <em>labeled</em> by the symbols of
+these sets. As for the third line, it stipulates that for arbitrary two expressions <span class="math-tex">\(e_1,\,e_2\in\mathscr{E}\)</span> a tree with a root labeled with any symbol
+from <span class="math-tex">\(\otimes\)</span>
+and immediate subtress <span class="math-tex">\(e_1\)</span>
+and <span class="math-tex">\(e_2\)</span> is also expression.
+</p>
+
+<p><img alt="Abstract Syntax for Expressions" height="620" name="image.png" src="https://ucarecdn.com/dddf55a7-8bf1-443a-8e1b-ca5da032ee1f/" width="1272" /></p>
+<p style="text-align: center">Abstract Syntax for Expressions</p>
+
+We call this definition <em>abstract</em> syntax because it describes nothing more than a subordination between elementary constructs. In order to represent
+expressions in some medium, however, we need <em>concrete</em> syntax; it is easy to anticipate that there can be multiple concrete syntaxes for given
+abstract one. In figure below (Various Concrete Syntaxes for Expression Language) we give some examples of those for expressions: the first (<em>a</em>) consists of graphical elements such as
+circles, lines, texts, etc. Another one (<em>b</em>)
+is the familiar <em>infix notation</em> which includes numbers, letters, binary
+operators and brackets. Yet another (but by no means the last one) is <em>reverse Polish notation</em>
+(<em>c</em>), in which binary operators are
+put <em>after</em> the operands they connect. In what follows we will stick with infix notation.
+
+<p><img alt="Various Concrete Syntaxes for Expression Language" height="464" name="image.png" src="https://ucarecdn.com/ef48f37d-88e4-4a80-851b-c1353ab7daf8/" width="888" /></p>
+<p style="text-align: center">Various Concrete Syntaxes for Expression Language</p>
+
+Now we need to define the semantic domain for the semantics of expressions. We already hinted that this domain should be shaped like a set of some
+data processing functions <span class="math-tex">\(\mathfrak{D}\to\mathfrak{D}\)</span>; however, we need to be more specific.
+
+As we deal with arithmetic expressions it is rather natural to expect that the results of their evaluation are interger values, i.e.
+<span class="math-tex">\(\mathbb{Z}\)</span> (as we agreed
+earlier, we assume <span class="math-tex">\(\mathbb{Z}\subset\mathfrak{D}\)</span>); on the other hand, the value of an expression depends on the values of variables it contains. We can
+encode these values as a <em>state</em> — a function which maps variables to integer values:
+
+<p style="text-align:center"><span class="math-tex">\(
+  St : \mathscr{X} \to \mathbb{Z}
+\)</span></p>
+
+There is nothing wrong with assuming <span class="math-tex">\(St\subset\mathfrak{D}\)</span>: as any expression can contain only a finite number of variables we are interested only in
+states with finite domains which can be encoded, for example, as finite lists of pairs. Thus, finally, we have the following "type" for the semantics
+of expressions:
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{\bullet}^\ph_\mathscr{E}:\mathscr{E}\to(St\to\mathbb{Z})
+\)</span></p>
+
+
+
+
+
+
+<h2>Denotational Semantics</h2>
+
+There are multiple ways to give the semantics for a language formally. Here we use so-called <em>denotational</em> way in which it is immediately
+specified what object from the semantic domain corresponds to a given language construct. For this concrete language denotational semantics
+looks simple and natural; however, for more advanced languages more advanced mathematical apparatus would be required. It is also worth mentioning that,
+as a rule, denotational semantics gives us a very abstract, high-level view on the behavior of programs, which may or may not be desirable from a
+practical standpoint.
+
+
+The denotational semantics for expressions is shown in figure below ().
+<p style="text-align:center" id="se-denot"><span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{z}^\ph_\mathscr{E} = \sigma \mapsto z \\
+  \sembr{x}^\ph_\mathscr{E} = \sigma \mapsto \sigma\,x \\
+  \sembr{e_1\otimes e_2}^\ph_\mathscr{E} = \sigma \mapsto \sembr{e_2}^\ph_\mathscr{E}\,\sigma\oplus\sembr{e_2}^\ph_\mathscr{E}\,\sigma
+\)</span></p>
+<p style="text-align:center"><em>Denotational Semantics of Simple Expressions</em></p>
+
+
+
+<p>We give here three equations, one for each syntactic form. In the right-hand side of each equation we immediately
+give the object (a function from states to integers) which corresponds to the semantics of the expression in the
+left-hand side. The notation <span class="math-tex">\(\star \mapsto \bullet\)</span>
+is used to denote a function from <span class="math-tex">\(\star\)</span>
+to <span class="math-tex">\(\bullet\)</span>; we refrain from
+using the lambda notation since these functions are elements of the <em>meta-language</em> (the language we use to describe the
+semantics), not of the <em>object</em> one (the language which semantics is being described).</p>
+
+<p>In the first equation, when the expression is a natural number <span class="math-tex">\(z\)</span>, its semantics is a constant function, which for
+any state <span class="math-tex">\(\sigma\)</span>
+return just this number <span class="math-tex">\(z\)</span>.</p>
+
+<p>When the expression in question is a variable <span class="math-tex">\(x\)</span>
+, its semantics is a function which, given a state <span class="math-tex">\(\sigma\)</span>, returns
+the value this state assigns to this variable.</p>
+
+<p>Finally, when the expression is a binary operator with two subexpressions <span class="math-tex">\(e_1\)</span>
+and <span class="math-tex">\(e_2\)</span>,
+its semantics is a function which, given a state <span class="math-tex">\(\sigma\)</span>,
+first calcalates the values of subexpressions <span class="math-tex">\(e_1\)</span>
+and <span class="math-tex">\(e_2\)</span> in the same state, and then combines them using a certain arithmetic operator
+<span class="math-tex">\(\oplus\)</span>.
+The correspondence between <span class="math-tex">\(\otimes\)</span> and
+<span class="math-tex">\(\oplus\)</span> is described by the following table:</p>
+
+<table>
+  <tr><td>⊗</td>       <td>⊕ in λaMa</td></tr>
+  <tr><td>+</td>       <td>+</td></tr>
+  <tr><td>-</td>       <td>-</td></tr>
+  <tr><td>×</td>  <td>*</td></tr>
+  <tr><td>/</td>       <td>/</td></tr>
+  <tr><td>%</td>      <td>%</td></tr>
+  <tr><td><</td>       <td><</td></tr>
+  <tr><td>></td>       <td>></td></tr>
+  <tr><td>≤</td>     <td><=</td></tr>
+  <tr><td>≥</td>     <td>>=</td></tr>
+  <tr><td>=</td>       <td>=</td></tr>
+  <tr><td>≠</td>     <td>!=</td></tr>
+  <tr><td>∧</td>  <td>&&</td>|</tr>
+  <tr><td>∨</td>   <td>!!</td> </tr>
+</table>
+
+<p>Here we use built-in &lambda;aMa binary operators to specify the semantics of <span class="math-tex">\(\oplus\)</span>; this approach is good enough for now since our primary objective is
+to implement a reference interpreter in &lambda;aMa. Later, when we will deal with <tt>x86</tt> codegenerator we will refine the understanding of
+these operators' semantics.</p>
+
+<p>Note, while the symbols in the first and second columns look similar, they actually have different nature: the left ones are
+elements of syntax while the right ones — conventional denotations for familiar arithmetic operators.
+The last equation in <a href="#se-denot">Denotational Semantics of Expressions</a>, thus, is actually a generic one which denotes <em>thirteen</em> concrete equations in which <span class="math-tex">\(\otimes\)</span>
+and <span class="math-tex">\(\oplus\)</span> are
+substituted coherently according to the table given above.</p>
+
+<p>We can make two important observations.</p>
+
+<p>First, in given semantics there is a single rule for any "kind" of expression (variable, constant, binary operation), and for each rule its right part defines
+semantic function unambiguously. Thus, for each expression <span class="math-tex">\(e\)</span>
+and each state <span class="math-tex">\(\sigma\)</span> there is <em>at most</em> one
+integer number <span class="math-tex">\(y\)</span> such that</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{e}^\ph_\mathscr{E}\,\sigma=x
+\)</span></p>
+
+
+<p>This to some extent justifies our desire for <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{e}^\ph_\mathscr{E}
+\)</span>
+to be a function from states to integers. Indeed, the
+property we just established is <em>functionality</em>. On the other hand, in the domain of semantics the same property has
+another name: <em>determinism</em>. Thus, the semantics in question is deterministic, meaning that evaluating any expression in a given state
+delivers at most one value. Non-deterministic semantics, according to which there can be multiple such values, seemingly are not
+compatible with our framework of semantic functions; nevertheless, such semantics exist, and there are ways to fix this incompatibility.
+Further we will deal only with deterministic semantics.</p>
+
+<p>Another important property is <em>compositionality</em>: the semantics of a construct is expressed in the terms of the semantics
+of its proper subconstructs. Indeed, the first two equations are <em>axioms</em>, meaning, that no expressions containing semantic
+brackets "<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{\bullet}^\ph_\mathscr{E}
+\)</span>" occur in the right-hand side; the third equation is not an axiom, but semantic
+backets are applied only to proper subconstructs (<span class="math-tex">\(e_1\)</span>
+and <span class="math-tex">\(e_2\)</span>)
+of the construct in question (<span class="math-tex">\(e\)</span>). Compositionality is
+a distinctive property of denotational semantics; using other semantic description styles may or may not result in compositional
+semantic specification.</p>
+
+<p>When a semantic is compositional, a certain proof principle — <em>structural induction</em> — can be used to establish
+its properties. This technique is essentially a specific kind of mathematical induction applied to <em>finite trees</em> rather than to
+natural numbers. To prove by structural induction that some property holds for all trees one needs to prove, first, that this
+property holds for all leaves (<em>base of induction</em>); then, assuming that the property holds for all trees up to a certain
+height (<em>induction hypothesis</em>) one needs to prove that the property holds for all trees one level higher. We demonstrate
+the application of this principle by the following example.</p>
+
+
+
+<h2>Strictness</h2>
+
+We are going to prove the <em>strictness</em> property of given semantics. It informally means that in order to calculate the
+value for the whole expression one needs to calculate the values for all its subexpressions. First, we define the
+following relation "<span class="math-tex">\(\preceq\)</span>" of one expression being a subexpression of another:
+
+<p style="text-align:center"><span class="math-tex">\(
+  \begin{array}{c}
+  e^\prime \preceq e^\prime\otimes e \\
+  e^\prime \preceq e\otimes e^\prime \\
+  e\preceq e \\
+  e^\prime\preceq e^{\prime\prime} \wedge e^{\prime\prime}\preceq e \Rightarrow e^\prime\preceq e
+\end{array}
+\)</span></p>
+
+The first two lines define the <em>immediate</em>
+subexpression relation while the last two — its <em>reflexive-transitive</em>
+closure. For example, for the expression <span class="math-tex">\((x+2)*y\)</span>
+all its subexpression are <span class="math-tex">\((x+2)*y\)</span>,
+<span class="math-tex">\(x+2\)</span>,
+<span class="math-tex">\(y\)</span>,
+<span class="math-tex">\(x\)</span>,
+and <span class="math-tex">\(2\)</span>.
+
+<!--\begin{lemma}[Strictness]-->
+<blockquote>
+  For all <span class="math-tex">\(e, \sigma \ and\  x\)</span> if
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+    \sembr{e}^\ph_\mathscr{E}\,\sigma=x
+\)</span></p>
+
+  then for all <span class="math-tex">\(e^\prime\preceq e\)</span>
+there exists <span class="math-tex">\(x^\prime\)</span> such that
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+    \sembr{e^\prime}^\ph_\mathscr{E}\,\sigma=x^\prime
+\)</span></p>
+</blockquote>
+<!--\end{lemma}-->
+
+<!--\begin{proof}-->
+<h4>Proof:</h4>
+  For base case (variable and constant) the lemma holds vacuously since in both cases
+  the only possible subexpressions are these expressions themselves.
+
+  Assume the lemma holds for <span class="math-tex">\(e_1\)</span> and
+<span class="math-tex">\(e_2\)</span>; we need to prove it holds for
+ <span class="math-tex">\(e_1\otimes e_2\)</span>.
+  By the definition of "<span class="math-tex">\(\preceq\)</span>"
+for any <span class="math-tex">\(e^\prime\preceq e_1\otimes e_2\)</span> one of the
+  following is true:
+
+  <ol>
+  <li> <span class="math-tex">\(e^\prime=e_1\)</span>, or</li>
+  <li> <span class="math-tex">\(e^\prime=e_2\)</span>, or</li>
+  <li> <span class="math-tex">\(e^\prime\preceq e_1\)</span>, or</li>
+  <li> <span class="math-tex">\(e^\prime\preceq e_1\)</span>.</li>
+  </ol>
+
+<p>
+  By the condition of lemma we have <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{e_1\otimes e_2}^\ph_\mathscr{E}\,\sigma=x\)</span>.
+</p>
+<p></p>
+  By the definition of <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{E}\)</span>
+we have <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{e_1}^\ph_\mathscr{E}\,\sigma\oplus\sembr{e_2}^\ph_\mathscr{E}\,\sigma=x\)</span>.
+
+By the definition of <span class="math-tex">\(\oplus\)</span>
+there exist <span class="math-tex">\(x_1\)</span>
+and <span class="math-tex">\(x_2\)</span> such that
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \begin{array}{rcl}
+    \sembr{e_1}^\ph_\mathscr{E}\,\sigma&=&x_1\\
+    \sembr{e_2}^\ph_\mathscr{E}\,\sigma&=&x_2
+  \end{array}
+\)</span></p>
+
+  If <span class="math-tex">\(e^\prime=e_1\)</span> or
+<span class="math-tex">\(e^\prime=e_2\)</span> then the lemma follows immediately.
+  If <span class="math-tex">\(e^\prime\preceq e_1\)</span>
+(or <span class="math-tex">\(e^\prime\preceq e_2\)</span>) the induction hypothesis can be applied as we just have proven that
+  both <span class="math-tex">\(e_1\)</span> and
+<span class="math-tex">\(e_2\)</span>
+have some values being evaluated in the state <span class="math-tex">\(\sigma\)</span>.
+<!--\end{proof}-->
+
+The strictness property, in particular, means that if variable <span class="math-tex">\(x\)</span>
+is undefined in some state <span class="math-tex">\(\sigma\)</span>, then
+any expression <span class="math-tex">\(e\)</span>,
+containing <span class="math-tex">\(x\)</span>, is also undefined in
+<span class="math-tex">\(\sigma\)</span>. Indeed, if
+<span class="math-tex">\(x\)</span> occurs in
+<span class="math-tex">\(e\)</span>, then, naturally,
+<span class="math-tex">\(x\preceq e\)</span>.
+If <span class="math-tex">\(\sigma\,x\)</span>
+undefined but <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{e}^\ph_\mathscr{E}\,\sigma\)</span> not, this would contradict
+the lemma we've just proven.
+
+<p>
+Now we can give precise answers to the questions asked in section Semantics.
+<!--  TODO somehow insert link maybe to the semantics section-->
+The first question was if the expression <span class="math-tex">\(0*(x/0)\)</span> evaluates to zero or undefined. Due to the strictness of our semantics it is undefined in
+any state. Indeed
+<span class="math-tex">\(
+  x/0 \preceq 0*(x/0)
+\)</span>
+and <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{x/0}^\ph_\mathscr{E}\,\sigma
+  \)</span> is
+undefined for any state <span class="math-tex">\(\sigma\)</span>
+since either <span class="math-tex">\(\sigma\,\)</span>x is undefined or
+<span class="math-tex">\(\sigma\,\)</span>x
+is defined but <span class="math-tex">\(\sigma\,\)</span>x / 0 is
+undefined due to the division by zero.</p>
+
+<p>
+The second question was if <span class="math-tex">\(1+x-x\)</span>
+is equivalent to 1. Again, by the strictness and the
+fact that <span class="math-tex">\(x \preceq 1+x-x\)</span> we immediately have that for the <em>empty state</em>
+<span class="math-tex">\(\Lambda\)</span>,
+undefined for every variable <span class="math-tex">\(x\)</span>,
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{1}^\ph_\mathscr{E}\,\Lambda=1\)</span>
+but <span class="math-tex">\(\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{1+x-x}^\ph_\mathscr{E}\,\Lambda\)</span>
+is undefined.
+Thus, these two expressions are not equivalent.
+</p>
+
+We stress that these answers are specific to the concrete semantics of expressions we described; for different semantics the answers can be different.

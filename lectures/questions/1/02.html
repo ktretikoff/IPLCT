@@ -1,0 +1,148 @@
+\begin{document}
+
+Group the following sentences with the suitable relations: (syntax, semantics, pragmatics)
+\begin{itemize}
+\item Kotlin provides infix notation with which we can skip using a dot and parentheses across the parameter
+\item Infix operator allows to call a function with the class object and the parameter
+\end{itemize}
+
+
+\section{Syntax}
+
+Select true statements:
+
+\begin{itemize}
+% True
+\item From the lexical point language can be seen as a sequence of tokens
+\item Expression consist of tokens
+% False
+\item Tokens consist of expressions
+\item Similarly to natural languages, programming can contain unresolvable ambiguities.
+\end{itemize}
+<ul>
+  <li> Syntax~--- relations between the signs of sign system themselves.</li>
+  <li> Semantics~--- relations between a sign system and objects.</li>
+  <li> Pragmatics~--- relations between a sign system and a person.</li>
+  <ul>
+    Select requirements which are usually used to design a programming language:
+    \begin{itemize}
+    % True:
+    \item unambiguity
+    \item allowing for efficient analysis
+
+    % False
+    \item allowing for easy verbal comprehension
+    \item ambiguity
+    \end{itemize}
+
+
+    \section{Semantics}
+
+    Select true statements:
+    \begin{itemize}
+    % True
+    \item We can always formally specify the semantics of a programming language
+    \item Compilers are usually evolve through time
+    % False
+    \item We can always formally specify the semantics of a natural language
+    \item Compilers are usually written "once and for all"
+    \item The compilers are the only instrument that requires knowledge of the language semantics
+    \end{itemize}
+
+    Write the word for the code which is designed to be incomprehensible:
+    obfuscated
+
+    \section{The Essence of Translation}
+    % Easy
+    What is the syntactic transformation of programs in one language into (equivalent) programs into another:
+    (translation)
+
+    Match the language with its
+
+    \begin{itemize}
+    \item The language in which programmer writes the code (source)
+    \item The language which is the result of the compilation process (target)
+    \item The language in which compiler is written (implementation)
+    \end{itemize}
+
+    % Medium
+
+    Kotlin compiler (https://github.com/JetBrains/kotlin) allows compilation into multiple platforms.
+    Match the language with its type (source, target, implementation)
+    \begin{itemize}
+    \item Kotlin (source, implementation)
+    \item JavaScript (target)
+    \item JVM byte-code (target)
+    \end{itemize}
+
+
+    \section{Translation Subspecies}
+
+    Match the translator type with its description:
+    \begin{itemize}
+    \item From TypeScript to JavaScript (transpiler)
+    \item From Java code to JVM bytecode (compiler)
+    \item From assembler bytecode to C code (decompiler)
+    \item From x86 to ARM assembly
+    \end{itemize}
+
+    Select true statements:
+    \begin{itemize}
+
+    \end{itemize}
+
+    \section{Environments, Runtime Support and Cross-Compilation}
+
+    % Easy
+    % What is runtime support library?
+    % What is a standard library?
+
+
+    What are the characteristics of runtime support library?
+    % True:
+    - Contains some of the programming language constructs
+    - Includes memory management
+    - Includes synchronization primitive
+    % False
+    - Included into the compiler itself
+    - Can be accessed directly by the programmer, writing in source language
+
+
+    1. We can create a compiler from expression language to x86 assembler in 2 steps:
+    <ol>
+      <li>Create a compiler from expression language to IR (Intermediate Representation) language. In our case this is
+        bytecode.
+      </li>
+      <li>Create a compiler from IR language to target assembler</li>
+    </ol>
+
+    <p>
+
+      That's exactly what Java uses for compilation.
+      It creates bytecode, which is close to assembler than the source language.
+      Then this bytecode can be compiled for the different architectures.
+    </p>
+    <p>
+      Then, for the step 1 (expression language -> IR) we also need multiple steps.
+      One of them is creating AST from source code, which we have done in the previous assignments.
+      The other one is converting AST to our bytecode (stack machine).
+    </p>
+    For our expression language we have only two rules (we will better learn how this rules are constructed in the :
+    <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\begin{array}{rcl}
+  \sembr{n}_{\mathscr E}^{comp}&=&[CONST(n)]\\
+  \sembr{A\otimes B}_{\mathscr E}^{comp}&=&\sembr{A}_{\mathscr E}^{comp}\sembr{B}_{\mathscr E}^{comp}[BINOP(\otimes)]
+\end{array}
+\)</span>
+
+    <p>First rule means, that the number n gets compiled into the instruction <code>CONST(n)</code></p>
+    <p>The second rule means that compilation of binary operator requires compilation of both of its operands, and then
+      creating <code>BINOP</code> stack instruction.</p>
+    <p>
+      In our simple language operands could be only numbers.
+      But it's possible that in some other language it could be variable or function call.
+    </p>
+
+    Input: BINOP ("+", BINOP ("*", 2, 3), 4)
+    Output: [CONST(2), CONST(3), BINOP("*"), CONST(4), BINOP("+")]

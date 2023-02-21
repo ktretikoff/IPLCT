@@ -1,0 +1,284 @@
+In this section we set the foundations for formal semantics which will be used in the rest of the course. We also discuss the
+relation between programs and their representation in a concrete data domain, introduce the notion of interpreter and
+consider some sample languages, their semantics and techniques for interpreter implementations.
+
+
+
+<h2>Languages and Semantics</h2>
+
+<p>
+  We consider a programming language <span class="math-tex">\(\mathcal L\)</span> as a (countable) set of programs
+
+<p style="text-align:center">
+<span class="math-tex">
+  \(\mathcal{L}=\{\displaystyle{\textbf{p}}_1,\,\displaystyle{\textbf{p}}_2,\dots\}\)</span>
+  To give a <em>semantics</em> for the language <span class="math-tex">\(\mathcal L\)</span> is to specify two objects:
+</p>
+
+<ul>
+  <li> a <em>semantic domain</em> <span class="math-tex">\(\mathcal D\)</span>;</li>
+  <li><p>a <em>total</em> mapping <span
+          class="math-tex">\([\![ \bullet ]\!]_{\mathcal L} : \mathcal L \to \mathcal D.\)</span></p></li>
+</ul>
+
+<p>
+  Thus, for a program
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\displaystyle{\textbf{p}}\in\mathcal L
+\)</span>
+</p>
+
+its semantics is just a
+
+<p style="text-align:center">
+<span class="math-tex">\(
+[\![ \displaystyle{\textbf{p}} ]\!]_{\mathcal L}\in\mathcal D
+\)</span>
+</p>
+<p>
+  When the language is easily deducible from the context we will omit the subscript and write simply <span
+        class="math-tex">\([\![ \bullet ]\!]\)</span>.
+</p>
+<p>
+  By claiming the totality of <span class="math-tex">\([\![ \bullet ]\!]\)</span> we
+  make sure that any program has some semantics. The nature of semantic domain <span
+        class="math-tex">\(\mathcal D\)</span> essentially defines the nature of <span class="math-tex">\([\![ \bullet ]\!]_{\mathcal L}\)</span>;
+  for example, we can set
+
+<p style="text-align:center">
+  <span class="math-tex">\(\mathcal D=\{\square\} \)</span>
+  and (the only choice)</p>
+
+
+<p style="text-align:center">
+  <span class="math-tex">\([\![ \displaystyle{\textbf{p}} ]\!]=\square \)</span>
+</p>
+
+<p>
+  for every <span class="math-tex">\(\displaystyle{\textbf{p}}\in\mathcal L\)</span>. We admit that this particular
+  semantics might not be very useful (this, however, depends on the nature of <span
+        class="math-tex">\(\mathcal L\)</span>), but the important observations are that
+</p>
+<ul>
+  <li> the choice of <span class="math-tex">\(\mathcal D\)</span> has to be made;</li>
+  <li> there might be (and, <em>as a rule</em>, are) multiple semantics for a given language.</li>
+</ul>
+
+<p>
+
+  These various semantics for a language may reflect its various properties (and we will see some of those in a little
+  while); however, as a rule, one particular
+  semantics is chosen as the "standard" one.
+</p>
+
+
+<h2>Data Domain</h2>
+
+<p>
+
+  If we speak of a general-purpose programming language and interested in its execution semantics then, probably, we may
+  consider choosing the semantic domain
+  to be the set of all <em>partially-recursive</em>
+  functions and <span class="math-tex">\([\![ p ]\!]\)</span> to be the function <span class="math-tex">\(p\)</span>
+  evaluates. This choice, however, would be too high-level and
+  abstract for our purposes.
+</p>
+<p>
+
+  To be more concrete, we first choose a <em>data
+  domain</em> <span class="math-tex">\(\mathfrak D\)</span> to be the set of all reasonable data values the programs can
+  take as inputs and
+  produce as outputs; then the semantic domain for executable semantics would be
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\mathcal{D}:\mathfrak{D}\to\mathfrak{D}
+\)</span>
+</p>
+
+<p>
+
+  Thus, executable semantics maps programs to data-processing functions.
+</p>
+
+<p>
+
+  In order to make further progress we stipulate the following properties of the data domain. First, we require its <em>closedness
+  under product</em>:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\mathfrak{D}\times\mathfrak{D}\subset\mathfrak{D}
+\)</span>
+</p>
+
+<p>
+
+  In other words, <span class="math-tex">\(\mathfrak{D}\)</span> contains all pairs, triples, etc. of its values.
+</p>
+
+<p>
+
+  The next requirement follows from out intention to make
+  <em>metaprogramming</em> possible. In short, the idea behind metaprogramming is
+  to use <em>programs</em>
+  as <em>data</em>. Indeed, all programming tools follow this approach: a compiler takes a program as input and
+  returns (another) program as output, etc. This can be done only if programs can be
+  <em>encoded</em> somehow in the data domain. We
+  consider some concrete encodings, using &lambda;aMa data domain later; for now we assume that for arbitrary
+  programming language <span class="math-tex">\(\mathcal{L}\)</span>
+  the set <span class="math-tex">\(\mathfrak{D}\)</span> contains the <em>representations</em>
+  of all programs in <span class="math-tex">\(\mathcal{L}\)</span>:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\forall \mathcal{L}\; .\; \mathcal{L}\subset\mathfrak{D}
+\)</span>
+</p>
+
+<p>
+
+  We agreed above to consider programming languages as sets of programs; we could, equivalently, consider them as sets
+  of
+  <em>representations</em> of
+  programs in some universal data domain. Since the correspondence between programs and their representations is
+  one-to-one this convention would
+  not hinder any follow-up reasonings. From now on we will not distinguish programs (abstract objects) from their
+  representations (concrete objects)
+  in <span class="math-tex">\(\mathfrak{D}\)</span>. Note, there can be multiple representations within one data domain,
+  but all of them are "equivalent" in the sense that
+  each pair of them admits an unambiguous conversions in both directions.
+</p>
+
+<h2>Semantic Properties</h2>
+
+Let us have a language <span class="math-tex">\(\mathcal{L}\)</span> and its <em>two</em> semantics
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\begin{array}{rcl}
+[\![ \bullet ]\!] & : & \mathcal{L} \to \mathcal{D}\\
+[\![ \bullet ]\!]^\prime & : & \mathcal{L} \to \mathcal{D}
+\end{array}
+\)</span>
+</p>
+
+with the <em>same</em>
+semantic domain. We say that these semantics are <em>equivalent</em>
+if and only if for arbitrary program <span class="math-tex">\(\displaystyle{\textbf{p}}\in\mathcal{L}\)</span>
+
+
+<p style="text-align:center">
+<span class="math-tex">\(
+[\![ \displaystyle{\textbf{p}} ]\!]=[\![ \displaystyle{\textbf{p}} ]\!]^\prime
+\)</span>
+</p>
+
+In other words, equivalent semantics assign to each program in the language the same element of semantic domain. A question might arise why would we
+need two equivalent semantics; wouldn't the single one be sufficient? The answer is that there are multiple ways of
+describing semantics, and these different ways have different properties which make them preferable in different settings. Sometimes it is desirable to
+reformulate the semantics in different terms. By proving the equivalence between the two we can justify that we still deal with the language with the same
+semantic properties.
+
+Note, when the semantic domain is domain of functions <span
+        class="math-tex">\(\mathfrak{D}\to\mathfrak{D}\)</span>, the equation above denotes the equality of functions: for
+arbitrary <span class="math-tex">\(x, y\in\mathfrak{D}\)</span>
+
+
+<p style="text-align:center">
+<span class="math-tex">\(
+[\![ \displaystyle{\textbf{p}} ]\!]^\prime\,x=y \Leftrightarrow [\![ \displaystyle{\textbf{p}} ]\!]\,x=y
+\)</span>
+</p>
+
+In other words, in both semantics <span
+        class="math-tex">\(\displaystyle{\textbf{p}}\)</span> is defined on exactly the same inputs and for each of these inputs it provides the same outputs.
+
+Another important property is <em>equivalence of programs</em>
+within the same semantics. We say that <span
+        class="math-tex">\(\displaystyle{\textbf{p}}_2\)</span> is (semantically) equivalent to <span class="math-tex">\(\displaystyle{\textbf{p}}_2\)</span>
+(notation: <span
+        class="math-tex">\(\displaystyle{\textbf{p}}_1\equiv\displaystyle{\textbf{p}}_2\)</span>) if and only if
+
+<p style="text-align:center">
+<span class="math-tex">\(
+[\![ \displaystyle{\textbf{p}}_1 ]\!]=[\![ \displaystyle{\textbf{p}}_2 ]\!]
+\)</span>
+</p>
+
+Thus, equivalent programs have the same semantics. The equivalence of
+<em>different</em> programs within the same semantics plays a crucial
+role in justifying the correctness of program transformations. Let us have some transformation of programs into programs:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+f : \mathcal{L}\to\mathcal{L}
+\)</span>
+</p>
+
+We say that <span class="math-tex">\(f\)</span> is <em>semantically correct</em>
+if and only if for all programs <span class="math-tex">\(\mathbf{p}\)</span>
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\sembr{f\,(\displaystyle{\textbf{p}})}
+=[\![ \displaystyle{\textbf{p}} ]\!]
+\)</span>
+</p>
+
+Thus, equivalent transformations do not change the semantics of programs; they can, however, change other their properties.
+
+When the semantic domain is domain of functions, the equation above, again, denotes the equality of functions; additionally,
+the following important notion can be introduced in this case. We say that <span class="math-tex">\(f\)</span> is <em>partially
+  correct</em> if and only if
+for all programs <span class="math-tex">\(\displaystyle{\textbf{p}}\)</span> and all <span class="math-tex">\(x, y\in\mathfrak{D}\)</span>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+[\![ \displaystyle{\textbf{p}} ]\!]\,x=y\Rightarrow\sembr{f\,(\displaystyle{\textbf{p}})}\,x=y
+\)</span>
+</p>
+
+The difference between correctness and partial correctness is that in the former case the programs are defined for exactly the same inputs,
+while in the latter the transformed program can be defined even if the original one in not. To some extent this is how
+optimizing transformations work, as we've seen in the previous chapter.
+
+Finally, there can be transformations between <em>different</em>
+languages with the <em>same</em>
+semantic domain. Let us have two languages <span class="math-tex">\(\mathcal{L}\)</span> and <span class="math-tex">\(\mathcal{M}\)</span>
+and let their semantics be
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\begin{array}{rcl}
+[\![ \bullet ]\!]_\mathcal{L} & : & \mathcal{L}\to\mathcal{D}\\
+[\![ \bullet ]\!]_\mathcal{M} & : & \mathcal{M}\to\mathcal{D}
+\end{array}
+\)</span>
+</p>
+
+We say that a transformation
+
+<p style="text-align:center">
+<span class="math-tex">\(
+f : \mathcal{L}\to\mathcal{M}
+\)</span>
+</p>
+
+is <em>semantically correct</em>
+if and only if for all programs <span class="math-tex">\(\displaystyle{\textbf{p}}\)</span>
+
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+[\![ \displaystyle{\textbf{p}} ]\!]_\mathcal{M}=\sembr{f\,(\displaystyle{\textbf{p}})}_\mathcal{L}
+\)</span>
+</p>
+
+And, again, when <span class="math-tex">\(\mathcal{D}\)</span> is a domain of functions the equation above denotes the equality of functions, and the notion of
+partial correctness arises. One example of transformation between languages is compilation; as we already know, compilers as a rule
+are partially correct.

@@ -1,0 +1,5 @@
+<p>[TITLE]Syntax # Application[/TITLE]<br>
+    In this step you will create an abstract syntax tree from the given source code. The source code is written in the language of expressions. This language consists of numbers and binary expressions, but later we'll extend it. For now we will have five binary operators: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code> Different operators have different associativity. For example, operator <code>^</code> have right associativity. The expression <code>(5 ^ 4 ^ 3 ^ 2)</code> should be calculated as <code>5 ^ (4 ^ (3 ^ 2))</code>, while division operator <code>/</code> have left associativity, and <code>6 / 3 / 2</code> should be calculated as <code>(6 / 3) /2</code> Also different operators have different priority. For example, <code>10 + 20 * 30</code> should be read as <code>10 + (20 * 30)</code></p>
+
+10 + 20 + 30 * 40
+BINOP("+", 10, BINOP("+", 20, BINOP ("*", 30, 40)))

@@ -1,0 +1,492 @@
+
+<h2>Deep Embedding</h2>
+
+<p>Remember, dealing with interpreters involves two languages:</p>
+
+<ul>
+  <li> a <em>target</em> language (the language being interpreted), and</li>
+  <li> an <em>implementation</em> language (the language the interpreter is written in).</li>
+</ul>
+
+<p>Thus, we represent target programs as data structures in implementation language (representation layer) and
+then evaluate these programs using interpreter (interpretation layer). In other words, we <em>embed</em>
+target language in the implementation one. This kind of embedding is called <em>deep embedding</em>. In our
+case, the case of straight-line programs languages, when we have two syntactic categories — expressions and
+statements — deep embedding amounts to developing two representations and two interpreters (for expressions
+and statements respectively).</p>
+
+<h2>Representation Layer</h2>
+
+The first step of deep embedding is defining the representation of programs. Previously we stipulated that any program in any language
+has a representation in the data domain <span class="math-tex">\(\mathfrak D\)</span>; that was rather a <em>abstract</em> theoretical requirement. For deep embedding,
+however, we need to devise a <em>concrete</em> representation
+for the <em>programs</em> in one language
+as <em>data structures</em> of another.
+The syntax of the straight-line programs language so far consists of the following elements:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\begin{array}{rcl}
+  \mathscr{X} & : &variables\\
+  \otimes     & : &binary\ operators\\
+  \mathbb{N}  & : &natural\ numbers\\
+  \mathscr{E} & : &expressions\\
+  \mathscr{S} & : &statements
+\end{array}
+\)</span></p>
+
+We need to devise a representation of each of them in the implementation lenguage, i.e. &lambda;aMa. It can be done in various ways;
+the simplest one is as follows:
+
+<ul>
+<li>variables and binary operators are represented by strings (thus, "<span class="math-tex">\(x\)</span>" becomes <code>"x"</code>
+  and "<span class="math-tex">\(*\)</span>" becomes <code>"*"</code>);</li>
+<li>natural numbers are represented by themselves.</li>
+</ul>
+
+The most natural way to represent abstract syntax trees (<span class="math-tex">\(\mathscr E\)</span>
+and <span class="math-tex">\(\mathscr S\)</span>) in &lambda;aMa is by using S-expressions. We can specify the
+"shape" of S-expressions to represent the categories of expressions and statements in our language as follows (see Fig.<a href="expr-stmt-repr">Representation of expressions and statements</a>).
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \begin{array}{rcl}
+
+  expr &=& \llang{Var\;\;\;\;\;\:(string)}\\
+       & & \llang{Const\ (int)}\\
+       & & \llang{Binop\ (string,\ \,expr,\ \,expr)}\\[2mm]
+  stmt &=& \llang{Skip}\\
+       & & \llang{Assn\;\;\;\;(string,\ \,expr)}\\
+       & & \llang{Read\;\;\;\;(string)}\\
+       & & \llang{Write\ (expr)}\\
+       & & \llang{Seq\quad\:\:\,(stmt,\ \,stmt)}
+\end{array}
+\)</span></p>
+<p id="expr-stmt-repr" style="text-align: center"><em>Representation of expressions and statements</em></p>
+
+<p>One may notice that this specification almost literally repeats the AST definitions for corresponding syntactic
+categories. This is not a coincidence — S-expressions are known to represent such data structures particularly
+well. This specification can be understood as a constraint which describes a certain invariant all representations
+of ASTs should comply with. In fact, we can even reify this constraint into the following two
+verification functions:</p>
+
+<pre><code>
+  fun exprWF (e) {
+    case e of
+      Var   (#str)       -> true
+    | Const (#val)       -> true
+    | Binop (#str, l, r) -> exprWF (l) && exprWF (r)
+    | _                  -> false
+    esac
+  }
+
+  fun stmtWF (s) {
+    case s of
+      Skip            -> true
+    | Assn  (#str, e) -> exprWF (e)
+    | Read  (#str)    -> true
+    | Write (e)       -> exprWF (e)
+    | Seq   (l, r)    -> stmtWF (l) && stmtWF (r)
+    | _               -> false
+    esac
+  }
+</code></pre>
+
+<p>These functions being applied to an arbitrary &lambda;aMa value return <code>true</code> if and only if this
+  value is a <em>well-formed</em> AST for expression or statement respectively.</p>
+
+<p>One may notice that our representation does not impose the strongest possible constraints: for example, it does not
+prohibit to use invalid binary operators like <code>"???"</code> or variables like <code>"..."</code>. While
+this is generally true we have to stress that the strength of representation constraints is not an objective in itself.</p>
+
+<p>Constraints of this kind are otherwise known as <em>types</em>.
+For languages with <em>static typing</em> their compilers
+provide a compile-time guarantee that type constraints are never violated; for <em>dynamically-typed</em>
+languages type constraints are checked at runtime; finally, for <em>untyped</em> languages (including &lambda;aMa)
+neither compiler nor runtime support provide any essential ensurance of this kind. All three approaches
+have their strong and weak points, and we are not going to lean to either side. We only stress that in the
+untyped case we still can work with well-structured data, and further we will use the descriptions
+like those in Fig.<a href="expr-stmt-repr"></a> to specify what kind of values we are dealing with.
+
+With all details of program representation defined we can encode straight-line programs as &lambda;aMa data structures;
+an example of a program and its corresponding representation is given in Fig.<a href="repr-example"></a>.
+This in principle already gives us everithing we need; however we may do the embedding a little more
+convenient to deal with. For this we first <em>redefine</em> all standard &lambda;aMa binary operators to
+work with <em>syntax trees</em> instead of numbers:
+
+  <table><tr>
+<td>
+<pre><code>
+   read (x);
+   read (y);
+   z := x + y;
+   write (z)
+</code></pre></td>
+<td>
+<pre><code>
+   Seq (
+     Read ("x"),
+     Seq  (
+       Read ("y"),
+       Seq  (
+         Assn  ("z", Binop ("+", Var ("x"), Var ("y"))),
+         Write (Var ("z"))
+   )))
+</code></pre></td>
+</tr></table>
+  <p id="repr-example" style="text-align: center"><em>An example program and its representation</em></p>
+<br>
+
+
+<pre><code>
+   infixl +  at +  (l, r) {Binop ("+",  opnd (l), opnd (r))}
+   infixl -  at -  (l, r) {Binop ("-",  opnd (l), opnd (r))}
+   infixl *  at *  (l, r) {Binop ("*",  opnd (l), opnd (r))}
+   infixl /  at /  (l, r) {Binop ("/",  opnd (l), opnd (r))}
+   infixl %  at %  (l, r) {Binop ("%",  opnd (l), opnd (r))}
+   infix  == at == (l, r) {Binop ("==", opnd (l), opnd (r))}
+   infix  != at != (l, r) {Binop ("!=", opnd (l), opnd (r))}
+   infix  <  at <  (l, r) {Binop ("<",  opnd (l), opnd (r))}
+   infix  <= at <= (l, r) {Binop ("<=", opnd (l), opnd (r))}
+   infix  >  at >  (l, r) {Binop (">",  opnd (l), opnd (r))}
+   infix  >= at >= (l, r) {Binop (">=", opnd (l), opnd (r))}
+   infixl && at && (l, r) {Binop ("&&", opnd (l), opnd (r))}
+   infixl !! at !! (l, r) {Binop ("!!", opnd (l), opnd (r))}
+
+   fun opnd (x) {
+     case x of
+       #str -> Var   (x)
+     | #val -> Const (x)
+     |      -> x
+     esac
+   }
+</code></pre>
+
+Now, any standard binary operator instead of actually performing designated arithmetic operation will
+construct corresponding expression AST. We assume that the arguments of these redefined operators
+can be either natural numbers (designating themselves), strings (designating variables) or other
+expression ASTs. A supplementary function <code>opnd</code> is used to consrtruct a well-formed AST
+for the operands of the first two forms.
+
+Of course as soon as these definitions are introduced the "old" standard operators become inaccessible in
+the same scope; however this limitation can be easily worked around, which we leave to the reader as an exercise.
+
+Second, we provide similar AST-constructing primitives for statements:
+
+<pre><code>
+   fun <TT>read</TT> (x) {
+     Read (x)
+   }
+
+   fun <TT>write</TT> (e) {
+     Write (opnd (e))
+   }
+
+   infix ::= before := (x, e) {
+     Assn (x, opnd (e))
+   }
+
+   infixr >> before ::= (s1, s2) {
+     Seq (s1, s2)
+   }
+</code></pre>
+
+Since neither "<code>;</code>"
+nor "<code>:=</code>" can be redefined in &lambda;aMa, we devised a slightly difference
+syntax for assignment ("<code>::=</code>")
+and sequential composition ("<code>>></code>"). Now in the scope of
+these definitions we can write straight-line programs in just a little different concrete syntax than that for
+the actual &lambda;aMa: we need to use "<code>::=</code>'
+' instead of "<code>:=</code>",
+"<code>>></code>" instead
+of "<code>;</code>" and take variables' names in quotes. Thus, the following &lambda;aMa expression
+
+<pre><code>
+   <TT>read</TT> ("x") >>
+   <TT>read</TT> ("y") >>
+   "z" ::= "x" + "y" >>
+   <TT>write</TT> ("z")
+</code></pre>
+
+will be evaluated to exactly the same representation as in Fig.<a href="repr-example"></a>.
+
+One may argue that in this concrete case we carefully staged all the things in advance in order to make deep embedding
+looking so nice. While, indeed, the very idea of &lambda;aMa development originates from the desire to have a
+language which would allow to easily demonstrate all relevant concepts and techniques in their direct form, the
+features we used here (S-expressions and user-defined binary operators) are by no means rare or exotic.
+They can be found in one or another form in many real-world production languages, and if some of them are missing the
+replacement can easily be found. On the contrary, modern languages are often equipped with specific features and
+tools (syntax extension mechanisms, preprocessors, hygienic macro systems, etc.) which &lambda;aMa does not have and which facilitate
+the development of <em>domain-specific languages</em> (DSLs), a valuable technique many software projects can benefit from.
+
+<h2>Interpretation Layer</h2>
+
+Similarly to the representation layer for the interpretation one we need to provide implementations for all components of
+lanaguage semantics and all relevant objects and operations. In our case these components are:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+      \def\transarrow{\xrightarrow}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+
+  \begin{array}{ccl}
+  St                            & - & states\\
+  \mathscr{W}                   & - & worlds\\
+  \mathscr{C}                   & - & configurations\\
+  \sembr{\bullet}^\ph_\mathscr{E} & - & semantics for expressions\\
+  \transrel                     & - & big-step evaluation relation\\
+  \sembr{\bullet}^\ph_\mathscr{S} & - & semantics for statements
+\end{array}
+\)</span></p>
+
+Luckily, corresponding &lambda;aMa implmentations are rather straightforward.
+
+We will represent states as regular &lambda;aMa functions; we also need implementations for empty state <span class="math-tex">\(\Lambda\)</span> and
+substitution operation <span class="math-tex">\(\bullet\,[\bullet\gets\bullet]\)</span>:
+
+<pre><code>
+   fun emptyState (x) {
+     failure ("undefined variable ""%s""\n", x)
+   }
+
+   infix <- before : (st, [x, v]) {
+     fun (y) {
+       if x = y then v else st (y) fi
+     }
+   }
+</code></pre>
+
+Note, <code>emptyState</code> kindly says us it is undefined on each variable instead of crushing. There were no such
+requirement in semantic description but from a software engineering standpoint it is always better to explicitly indicate
+a problem instead of going to hell in a solemn silence. For substitution we provide an infix operator; since there are
+no ternary operators in &lambda;aMa we specify a variable-value pair as its second operand; thus instead of
+<span class="math-tex">\(s\,[x\gets v]\)</span>
+we will write <code><span class="math-tex">\(s\ <-\ [x\ v\)</span>]</code>.
+
+We will represent worlds as pairs of input/output streams, and streams as lists of integers. The implementation for
+world primitives is straighforward as well:
+
+<pre><code>
+   fun createWorld (input) {
+     [input, {}]
+   }
+
+   fun writeWorld (n, [input, output]) {
+     [input, n:output]
+   }
+
+   fun readWorld ([n:input, output]) {
+     [n, [input, output]]
+   }
+
+   fun getOutput ([_, output]) {
+     reverse (output)
+   }
+</code></pre>
+
+Function <code>createWorld</code> makes a fresh world from initial input stream;
+functions <code>readWorld</code>,
+<code>writeWorld</code>,
+and <code>getOutput</code>
+are implementations of world primitives <b>read</b>, <b>write</b>, and <b>out</b> respectively. Note, in the implementation we hold output stream
+in the <em>reverse</em> order (since it is slightly easier to add elements to the beginning of a list than to the end), and reverse it before extracting.
+
+Now we may proceed with interpreter implementation for expressions. It worth mentioning that denotational semantics approach, which we used for expressions, conventionally
+rarely used to implement interpreters as it provides a too abstract, high-level view on the semantics. In a number of cases such an interpreter can not be
+implemented at all due to fundamental undecidability of what denotational semantics specifies (for example, there can be no refulationally complete interpreter
+for <div  style="font-variant-caps: all-small-caps">Prolog</div> while its denotational semantics, the least Herbrand model, can easily be described). However, in our case of simple arithmetic expressions
+denotational semantics is so simple that constructing a coherent interpreter is trivial.
+  <pre><code>
+   fun evalExpr (expr) {
+     case expr of
+       Var   (x)        -> fun (st) {st (x)}
+     | Const (n)        -> fun (st) {n}
+     | Binop (op, l, r) -> fun (st) {
+                               evalOp (op)(
+                                 evalExpr (l)(st),
+                                 evalExpr (r)(st))
+                             }
+     esac
+   }
+  </code></pre>
+  <p id="exprint-toplevel" style="text-align: center"><em>Expression interpreter, top-level function</em></p>
+
+The top-level function for expression interpreter, <code>evalExpr</code>, is shown in <a href="exprint-toplevel">Expression interpreter, top-level function</a>. Recall, in denotational semantics we specified a function
+from states to integer numbers for each possible form of expression, and we discriminated between these forms using different (and mutually-exclusive) equations.
+In &lambda;aMa these equations are encoded almost literally using pattern-matching in the form of case expression. The branches of this case expression
+correspond to the right-hand sides of the semantic equations:
+
+<ul>
+<li>If the expression being evaluated is a variable, then we return an integer value the current state <code>st</code> associates with this variable; remember, we
+  represent states by functions, so it is sufficient to simply make a call to <code>st</code>.</li>
+<li>For a constant expression, we return integer value <code>n</code> this expression designates.</li>
+<li>For binary operator we, first, evaluate the values of its left (<code>l</code>)
+  and right (<code>r</code>) operands
+  using recursive calls to <code>evalExpr</code>. These
+  recursive calls precisely correspond to denotational brackets in the right-hand side of relevant equation. Then, we combine these values in a way binary operator
+  sign <code>op</code> prescribes.
+  For this we use a supplementary function <code>evalOp</code>, which encodes the syntactic-to-semantic correspondence shown in the table
+  in the operators table in the previous lesson.</li>
+<!--  TODO table ref-->
+</ul>
+
+The implementation of <code>evalOp</code> is shown in Fig.<a href="binary-int"></a>.
+We first construct a table <code>ops</code> which encodes a correspondence between syntactic representations
+of binary operators and their semantic counterparts<a href="footnote">*</a>; then we construct a function which takes a syntactic representation of a binary operator as a string, searches the table and
+returns corresponding function (or signals an error if no such function is found).
+
+  <pre><code>
+   val evalOp =
+     let ops = {["+" , infix + ],
+                ["-" , infix - ],
+                ["*" , infix * ],
+                ["/" , infix / ],
+                ["%" , infix % ],
+                ["==", infix ==],
+                ["!=", infix !=],
+                ["<" , infix < ],
+                ["<=", infix <=],
+                [">" , infix > ],
+                [">=", infix >=],
+                ["&&", infix &&],
+                ["!!", infix !!]}
+     in
+     fun (op) {
+       case assoc (ops, op) of
+         Some (f) -> f
+       | _        -> failure ("undefined binary operator ""%s""", op)
+       esac
+     };
+  </code></pre>
+  <p id="binary-int" style="text-align: center"><em>Binary operators interpreter</em></p>
+
+
+<p>We now can switch to the implementation of big-step interpreter for statements. Obviously, the main work is to encode the big-step evaluation
+relation "<span class="math-tex">\(
+            \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+\transrel\)</span>". We implement it as a function <code>evalStmt</code> (Fig.<a href="bigint"></a>) which takes initial configuration and a statement
+and returns final configuration (if any). Again, in the specification of big-step operational semantics different rules handle different
+forms of statements. In implementation, the same work is done by pattern-matching, and different branches of case expression correspond to
+  different rules of the semantics:</p>
+
+<ul>
+<li> For skip statement, we just return current configuration.</li>
+<li> For assignment, we first evaluate its right-hand side expression <code>e</code> in current state, modify current state using binary
+  operator "<code><-</code>" and return modified configuration.</li>
+<li> For read and write statements we use corresponding primitives for worlds and return modified configurations.</li>
+<li> Finally, for sequential composition we calculate the composition of evaluator applications.</li>
+</ul>
+
+Finally, the top-level interpreter just calls for <code>evalStmt</code>, constructing initial configuration, and returning
+the output stream from the final one:
+
+<pre><code>
+   fun eval (stmt, input) {
+     getOutput $ evalStmt ([emptyState, createWorld (input)], stmt)
+   }
+</code></pre>
+
+And, again, this function literally encodes the rule for <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \sembr{\bullet}_{\mathscr{S}}\)</span> on the page Surface Semantics.
+<!--  TODO page ref-->
+
+Now with this interpreter we can run straight-line programs. We take as an example a summation program already considered
+to illustrate how deep embedding works. We can evaluate the result of this program for the input stream "<code>{2, 3}</code>":
+
+<pre><code>
+   printf ("%s\n", evalStmt (<TT>read</TT> ("x") >>
+                              <TT>read</TT> ("y") >>
+                              "z" ::= "x" + "y" >>
+                              <TT>write</TT> ("z"),
+                             {2, 3}
+                   )
+   )
+</code></pre>
+
+This will print "<code>{5}</code>", of course.
+
+In future we will refrain from giving such detailed comments on constructing interpreters from operational semantics
+description. We did it here for the first time to demonstrate that semantic rules can be directly encoded
+in a programmatical implementation. Later we will leave the development of interpreters to the reader, only
+giving a high-level implementation hints.
+
+  <p>
+  <pre><code>
+   fun evalStmt (c@[s, w], stmt) {
+     case stmt of
+       Skip           -> c
+     | Assn  (x, e)   -> [s <- [x, evalExpr (e)(s)], w]
+     | Read  (x)      -> let [n,w] = readWorld (w) in
+                          [s <- [x, n], w]
+     | Write (e)      -> [s, writeWorld (evalExpr (e)(s), w)]
+     | Seq   (s1, s2) -> evalStmt (evalStmt (c, s1), s2)
+     esac
+   }
+  </code></pre>
+
+  </p>
+  <p id="bigint" style="text-align: center"><em>Big-step semantics interpreter</em></p>
+
+<p><a id="footnote">*</a>Of course this should be done in a <em>different</em> scope than that in which we redefined all standard binary
+  operators in order to implement deep embedding.</p>
+
+<h2>Metacircularity and Towers of Interpreters</h2>
+
+<p>
+The interpreter we presented in the previous section implements a subset of &lambda;aMa in &lambda;aMa. When an interpreter of
+a language is implemented in this language itself it is called a <em>self</em>-interpreter,
+or <em>meta-circular</em>
+interpreter. Metacircularity is another way to specify the semantics of a language: indeed, an implementation
+of an interpreter delivers the same amount of knowledge (if not more) as operational semantics, and the
+language itself serves as a metalanguage. On the other hand, the whole idea of expressing the semantics of
+a language in terms of the semantics of the same language looks vacuous at the first glance: indeed, if we
+already understand the semantics there is no need to specify it in the form of an interpreter, and if not then how
+can we implement an interpreter in a language which semantics we do not fully understand? The answer is that we can
+use some small subset of the language which semantics we understand well enough to implement the interpreter of
+the full language. Thus the semantics of complicated constructs becomes encoded in terms of simpler
+ones.</p>
+
+<p>Another interesting concept which arises naturally is <em>tower of interpreters</em>. Let us have a self-interpreter,
+say an interpreter of &lambda;aMa implemented in &lambda;aMa. This interpreter can run arbitrary &lambda;aMa programs, including <em>itself</em>.
+This construct can be generalized: we can have an interpreter for a language <span class="math-tex">\(L_2\)</span>
+written in a language <span class="math-tex">\(L_1\)</span>, and
+interpreter for <span class="math-tex">\(L_3\)</span>
+written in <span class="math-tex">\(L_2\)</span>, etc.
+Thus we can run <span class="math-tex">\(L_3\)</span>-program
+on <span class="math-tex">\(L_3\)</span>-interpreter
+running as <span class="math-tex">\(L_2\)</span>-program
+on <span class="math-tex">\(L_2\)</span>-interpreter
+running as <span class="math-tex">\(L_1\)</span>-program
+on <span class="math-tex">\(L_1\)</span>-interpreter, etc. We may wonder why someone would wish to use such an
+exotic appliance. The answer is that, first, like in the metacircular case, these languages can have different expressive power
+and different complexity. We may take some very simple language and implement an interpreter for more complex one, etc.</p>
+<p>Thus we can eventually come up with a very advanced language, but in a number of steps with moderately
+increasing complexity which may be desirable from an engineering standpoint. What is more important is that
+the properties of the semantics and runtime environment of interpreter implementation language
+to some extend are inherited for the language being interpreted. For example, let's assume that we have a profiler for some
+language <span class="math-tex">\(L_1\)</span>.
+If we implement an interpreter for <span class="math-tex">\(L_2\)</span>
+in <span class="math-tex">\(L_1\)</span>
+we will acquire a profiler for <span class="math-tex">\(L_2\)</span> for free  indeed,
+we will only need to map the profiling points in the interpreter for <span class="math-tex">\(L_2\)</span> to the points of a program being interpreted.</p>
+
+<p>Tower of interpreters is a nice theoretical construct, an interesting research subject and at the same time a
+convenient engineering tool.</p>
+

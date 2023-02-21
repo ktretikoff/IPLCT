@@ -1,0 +1,58 @@
+
+<h2 style="text-align:center">The &lambda;aMa Compiler</h2>
+
+<p>Now, when we discussed a little how compilers work, let&#39;s have a look at &lambda;aMa&nbsp;compiler, which will be our main tool throughout the course, and which we will be implementing. </p>
+
+<p>The &lambda;aMa compiler is organized much simpler than the majority of industrial-tier compilers like <tt>GCC</tt>, which we already mentioned multiple times. </p>
+
+<p style="text-align:center"><img alt="" height="782" name="image.png" src="https://ucarecdn.com/ed355a76-7789-41d0-a571-7c5e6c303991/" width="720" /></p>
+
+<p style="text-align:center">The Structure of &lambda;aMa Compiler</p>
+
+<p>The source file with a&nbsp;&lambda;aMa program is parsed by a syntax analyser which converts it into an abstract syntax tree, or AST. An example of a program and its AST (actually, an <em>HTML-rendering</em> of its AST) is shown below: </p>
+
+<p><code>printf (&quot;Hello, world!\n&quot;)</code><img alt="" height="216" name="01-08.png" src="https://ucarecdn.com/e2004152-d411-4f16-8123-890eeee3b387/" width="428" /></p>
+
+<p>AST is one of the most important program representations, and its use in compilers and other tools is ubiquitous. </p>
+
+<p>The next component, which is rarely implemented in real-world compilers, is a source-level interpreter. We consider this object in details later, for now it is sufficient to know that interpreter is a component which directly runs a program in some representation &mdash; in our case, in the form of AST, &mdash; according to the semantics of the language. The presence of interpreter plays an important role from both educational and technological standpoints. First, the implementation of interpreter facilitates the internalization of formal semantics description method which we use, namely &mdash; big-step operational semantics. Next, it allows to find and eliminate some errors at early stage. The implementation of interpreter is rather a simple task, and it is advantageous to be capable of running program at early stages of compiler implementation. </p>
+
+<p>Then, there is a compiler of AST into <em>stack machine</em> code. This machine resembles a simplified model of actual hardware processor; thus, on one hand, to generate stack machine code a similar set of tasks has to be solved; on the other, these solutions are a bit simpler than for an actual hardware. For our example program the corresponding stack machine code looks like </p>
+
+<pre>
+<code>LABEL (&quot;main&quot;)
+BEGIN (&quot;main&quot;, 2, 0, [], [], [])
+STRING (&quot;Hello, world!\\n&quot;)
+CALL (&quot;Lprintf&quot;, 1, false)
+END     </code></pre>
+
+<p>Generated stack machine code can then be run on the <em>stack machine interpreter</em>. Similarly to source-level interpreter case, the capability to run stack machine code makes it possible to develop and debug stack machine compiler in isolation.</p>
+
+<p>Finally, the last component of the compiler is code generator for <tt>x86</tt> processor which transforms stack machine code into <tt>x86</tt> assembler program; this program is then passed to the <tt>GCC</tt> infrastructure to be finally transformed into an object module. An example of <tt>x86</tt> assembler listing for our example program is shown below: </p>
+
+<pre>
+<code>         .globl main
+         .data
+string_0:.string &quot;Hello, world!\n&quot;
+main:
+# BEGIN (&quot;main&quot;, 2, 0, [], [], []) /
+# STRING (&quot;Hello, world!\\n&quot;) /
+         movl  $string_0, %ebx
+  pushl    %ebx
+  call Bstring
+  addl $4,    %esp
+  movl %eax,  %ebx
+# CALL (&quot;Lprintf&quot;, 1, false) /
+  pushl    %ebx
+  call Lprintf
+  addl $4,    %esp
+  movl %eax,  %ebx
+# END /
+  movl %ebx,  %eax
+Lmain_epilogue:
+         movl  %ebp,  %esp
+  popl %ebp
+  xorl %eax,  %eax
+  ret</code></pre>
+
+<p>Thus, from the architectural point of view, syntax analyser constitutes a frontend, while compilers for stack machine and <tt>x86</tt> &mdash; a backend.</p>

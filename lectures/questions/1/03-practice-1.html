@@ -1,0 +1,21 @@
+<p>We can create a compiler from expression language to x86 assembler in 2 steps:</p>
+
+<ol>
+    <li>Create a compiler from expression language to IR (Intermediate Representation) language. In our case this is bytecode.</li>
+    <li>Create a compiler from IR language to target assembler</li>
+</ol>
+
+<p>That's exactly what Java uses for compilation. It creates bytecode, which is close to assembler than the source language. Then this bytecode can be compiled for the different architectures.</p>
+
+<p>Then, for the step 1 (expression language -&gt; IR) we also need multiple steps. One of them is creating AST from source code, which we have done in the previous assignments. The other one is converting AST to our bytecode (stack machine).</p>
+
+<p>For our expression language we have only two rules (we will better learn how this rules are constructed in the : <span class="math-tex">\( \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket} \begin{array}{rcl} \sembr{n}_{\mathscr E}^{comp}&amp;=&amp;[CONST(n)]\\ \sembr{A\otimes B}_{\mathscr E}^{comp}&amp;=&amp;\sembr{A}_{\mathscr E}^{comp}\sembr{B}_{\mathscr E}^{comp}[BINOP(\otimes)] \end{array} \)</span></p>
+
+<p>First rule means, that the number n gets compiled into the instruction <code>CONST(n)</code></p>
+
+<p>The second rule means that compilation of binary operator requires compilation of both of its operands, and then creating <code>BINOP</code> stack instruction.</p>
+
+<p>In our simple language operands could be only numbers. But it's possible that in some other language it could be variable or function call.</p>
+
+BINOP ("+", BINOP ("*", 2, 3), 4)
+[CONST(2), CONST(3), BINOP("*"), CONST(4), BINOP("+")]

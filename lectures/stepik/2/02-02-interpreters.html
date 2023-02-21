@@ -1,0 +1,334 @@
+<h2>Interpreters, Compilers, Specializers</h2>
+
+We already mentioned compilation as a syntactic transformation from one language to another; we also
+talked of compilers as programs which implement compilation. Here we consider them and some other useful
+transformations in the form of programs in more details.
+
+Let <span class="math-tex">\(\mathcal{L}\)</span> and <span
+        class="math-tex">\(\mathcal{M}\)</span> be two languages, and
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\begin{array}{rcl}
+[\![ \bullet ]\!]_{\mathcal L} & : & \mathcal{L} \to \mathfrak{D} \to \mathfrak{D}\\
+[\![ \bullet ]\!]_{\mathcal M} & : & \mathcal{M} \to \mathfrak{D} \to \mathfrak{D}
+\end{array}
+\)</span>
+</p> — their semantics. An <em>interpreter</em>
+for language <span class="math-tex">\(\mathcal{L}\)</span>,
+written in language <span class="math-tex">\(\mathcal{M}\)</span>,
+is a program <span class="math-tex">\(
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+\Int{L}{M}\in\mathcal{M}\)</span>, such that for each
+program <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\in\mathcal{L}\)</span>
+and each data value <span class="math-tex">\(x\in\mathfrak{D}\)</span>
+
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+
+  \sembr{\Int{L}{M}}_\mathcal{M}\,(\displaystyle{\textbf{p}}_\mathcal{L}\times x) = \sembr{\displaystyle{\textbf{p}}_\mathcal{L}}_\mathcal{L}\,(x)\ \ \ \ \ \ \ \ \ \ \ \ {(\star)}
+\)</span>
+</p>
+
+To some extent an interpreter
+<em>implements</em> the semantics of a programming language: given a program and its input it provides exactly the same result
+this program calculates. Of course there can be many interpreters for a given pair of languages; any program <span
+        class="math-tex">\(\mathbf{i}_\mathcal{M}\)</span> satisfying equation <span
+        class="math-tex">\((\star)\)</span>,
+e.g. such than
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\forall \displaystyle{\textbf{p}}_\mathcal{L},\,x\in\mathfrak{D}\,.\,\sembr{\mathbf{i}_\mathcal{M}}_\mathcal{M}\,(\displaystyle{\textbf{p}}_\mathcal{L}\times x)=\sembr{\displaystyle{\textbf{p}}_\mathcal{L}}_\mathcal{L}\,(x)
+\)</span>
+</p>
+is an interpreter.
+
+<p>
+  A particular interesting kind of interpreter is <em>self</em>-interpreter
+  <span class="math-tex">\(
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+\Int{L}{L}\)</span>, i.e. an interpreter which interprets the language of its own implementation.
+  In the computability theory such interpreters are known under the name "<em>universal functions</em>", and it is
+  proven than universal functions exist for
+  all Turing-complete languages.
+</p>
+<p>
+  Another interesting program is, of course, a compiler. Given languages <span class="math-tex">\(\mathcal{L}\)</span>,
+  <span class="math-tex">\(\mathcal{M}\)</span>,
+  and <span class="math-tex">\(\mathcal{N}\)</span>, a compiler from
+  <span class="math-tex">\(\mathcal L\)</span> to <span class="math-tex">\(\mathcal N\)</span>
+  , written in a language <span class="math-tex">\(\mathcal M\)</span>
+  , is a program <span class="math-tex">\(
+  \newcommand{\Comp}[3]{\mathbf{comp}^{\mathcal {#1}\to\mathcal{#2}}_{\mathcal {#3}}}
+\Comp{L}{N}{M}\in\mathcal M\)</span> such that
+  for all programs <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\in\mathcal L\)</span>
+  and all input data values <span class="math-tex">\(x\in\mathfrak{D}\)</span> the following equation holds:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\Comp}[3]{\mathbf{comp}^{\mathcal {#1}\to\mathcal{#2}}_{\mathcal {#3}}}
+
+  \sembr{\sembr{\Comp{L}{N}{M}}_\mathcal{M}\,(\displaystyle{\textbf{p}}_\mathcal{L})}_\mathcal{N}\,(x) = \sembr{\displaystyle{\textbf{p}}_\mathcal{L}}_\mathcal{L}\,(x)\ \ \ \ \ \ \ \ \ \ \ \ {(\star\star)}
+\)</span>
+</p>
+
+<p>
+  Indeed, a compiler takes a program representation <span
+        class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>
+  as input and produces another program, <span class="math-tex">\(
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\Comp}[3]{\mathbf{comp}^{\mathcal {#1}\to\mathcal{#2}}_{\mathcal {#3}}}
+
+  \sembr{\Comp{L}{N}{M}}_\mathcal{M}\,(\displaystyle{\textbf{p}}_\mathcal{L})\)</span>,
+  this time in the language <span class="math-tex">\(\mathcal{N}\)</span>,
+  which gives exactly the same result as <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>
+  for any input <span class="math-tex">\(x\)</span>.
+  And, again, any program <span class="math-tex">\(\mathbf{c}_\mathcal{M}\)</span> satisfying
+  the equation <span class="math-tex">\((\star\star)\)</span> is a compiler.
+</p>
+
+<p>
+  Finally, there can be a program called <em>specializer</em>
+  <span class="math-tex">\(
+  \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+  \Spec{L}{M}\)</span>,
+  written in a language <span class="math-tex">\(\mathcal M\)</span>
+  for a language <span class="math-tex">\(\mathcal L\)</span>, such that for
+  all programs <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\in\mathcal L\)</span>
+  and all data values <span class="math-tex">\(x, y\in\mathfrak D\)</span>
+</p>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+    \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+
+  \sembr{\sembr{\Spec{L}{M}}_\mathcal{M}\,(\displaystyle{\textbf{p}}_\mathcal{L}\times x)}_\mathcal{L}\,(y)=\sembr{\displaystyle{\textbf{p}}_\mathcal{L}}_\mathcal{L}\,(x\times y)\ \ \ \ \ \ \ \ \ \ \ \ {(\star\star\star)}
+\)</span>
+</p>
+
+<p>
+  Informally, a specializer takes as input a program <span
+        class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span> and
+  <em>one</em> of its inputs <span class="math-tex">\(x\)</span>
+  and builds a program in the same language <span class="math-tex">\(\mathcal L\)</span> which
+  takes <span class="math-tex">\(y\)</span> — the remaining inputs of <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>,
+  — and provides exactly the same result as <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>
+  for both <span class="math-tex">\(x\)</span>
+  and <span class="math-tex">\(y\)</span>. The existence of specializers is,
+  again, guaranteed by the computability theory (<em>Kleene <em>s-m-n</em>—theorem</em>).
+</p>
+<p>
+  It's worth discussing why (and, actually, when) these programs exist. Obviously, if both <span class="math-tex">\(\mathcal{L}\)</span>
+  and <span class="math-tex">\(\mathcal{M}\)</span> are Turing-complete, there exist both <span class="math-tex">\(
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+\Int{L}{M}\)</span>
+  and <span class="math-tex">\(
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+\Int{M}{L}\)</span> (why?).
+</p>
+<h2>Futamura Projections</h2>
+
+We now study a few elegant theoretical constructs which connect together the notions of interpreters, compilers and specializers. To simplify the presentation we
+introduce the following denotation
+
+<p style="text-align:center">
+<span class="math-tex">\(
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+p_\mathcal{L}=\sembr{\displaystyle{\textbf{p}}_\mathcal{L}}_\mathcal{L}
+\)</span>
+</p>
+
+for a program <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>.
+Thus, while <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{L}\)</span>
+is a program in a language <span class="math-tex">\(\mathcal{L}\)</span> (i.e. a syntactic object),
+<span class="math-tex">\(p_\mathcal{L}\)</span> is
+its semantics (a function in the data domain).
+
+Our first step is to apply a specializer <span class="math-tex">\(
+    \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+  \Spec{L}{M}\)</span>
+to some interpreter <span class="math-tex">\(
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+\Int{N}{L}\)</span>
+and some program <span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{N}\)</span> it can interpret:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+    \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\IntS}[2]{{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+
+  \sembr{\underline{\SpecS{L}{M}\,(\Int{N}{L}\times \displaystyle{\textbf{p}}_\mathcal{N})}}_\mathcal{L}\,(x)=\IntS{N}{L}\,(\displaystyle{\textbf{p}}_\mathcal{N}\times x)=\sembr{\underline{\displaystyle{\textbf{p}}_\mathcal{N}}}_\mathcal{N}\,(x)\ \ \ \ \ \ \ \ \ \ \ \ {(I)}
+\)</span>
+</p>
+
+The first equality follows immediately from <span class="math-tex">\((\star\star\star)\)</span>
+while the second — immediately from <span
+        class="math-tex">\((\star)\)</span>. Let's now look at the underlined parts. The
+<em>right</em> one is, obviously,
+<span class="math-tex">\(\displaystyle{\textbf{p}}_\mathcal{N}\)</span>,
+a program in the language <span class="math-tex">\(\mathcal{N}\)</span>. The <em>left</em>
+one is some program in the language <span
+        class="math-tex">\(\mathcal{L}\)</span>. The equation itself states that the semantic of these
+two programs give the same value for every input <span
+        class="math-tex">\(x\)</span>. In other words, these two programs are equivalent. This is the first Futamura projection:
+
+<q>
+
+  <em>The specialization of an interpreter for a program gives the representation of this program in the language of
+    interpreter implementation.</em>
+</q>
+
+Next, let's specialize a specializer for an interpreter:
+
+<span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+  \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+
+\begin{equation}
+\sembr{\sembr{\underline{\SpecS{M}{K}\,(\Spec{L}{M}\times\Int{N}{L})}}_\mathcal{K}\,(\displaystyle{\textbf{p}}_\mathcal{N})}_\mathcal{L}\,(x)=\\
+\sembr{\SpecS{L}{M}\,(\Int{N}{L}\times \displaystyle{\textbf{p}}_\mathcal{N})}_\mathcal{L}\,(x)=
+\sembr{\displaystyle{\textbf{p}}_\mathcal{N}}_\mathcal{N}\,(x)\tag{II}
+\end{equation}
+  \)</span>
+
+The first equation, again, immediately follows from <span class="math-tex">\((\star\star\star)\)</span>,
+while the second — from <span class="math-tex">\((I)\)</span>. If we look at the underlined part long enough, it becomes
+evident that it is a program in the language <span class="math-tex">\(\mathcal{M}\)</span>
+which satisfies the equation <span class="math-tex">\((\star\star)\)</span>,
+i.e. a compiler <span class="math-tex">\(
+  \newcommand{\Comp}[3]{\mathbf{comp}^{\mathcal {#1}\to\mathcal{#2}}_{\mathcal {#3}}}
+\Comp{N}{L}{M}\)</span>. This is a second Futamura projection:
+
+<q>
+  <em>The specialization of a specializer to an interpreter gives a compiler from the interpreting language to the
+    language of interpreter implementation.</em>
+</q>
+
+Finally, we can specialize a specializer to a specializer:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+  \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+
+  \sembr{\SpecS{K}{T}\,(\Spec{M}{K}\times\Spec{L}{M})}_\mathcal{T}\,(\Int{N}{L})=\SpecS{M}{K}\,(\Spec{L}{M}\times\Int{N}{L})\ \ \ \ \ \ \ \ \ \ \ \ {(III)}
+\)</span>
+</p>
+
+<p>
+
+  The equation immediately follows from <span class="math-tex">\((\star\star)\)</span>;
+  its right part, according to <span class="math-tex">\((II)\)</span>,
+  is <span class="math-tex">\(
+  \newcommand{\Comp}[3]{\mathbf{comp}^{\mathcal {#1}\to\mathcal{#2}}_{\mathcal {#3}}}
+\Comp{N}{L}{M}\)</span>. This is the
+  third Futamura projection:
+</p>
+
+<q>
+  <em>
+    The specialization of a specializer to a specializer gives a compiler generator which for an interpreter generates
+    a compiler from the interpreting language to the language of interpreter implementation.
+  </em>
+</q>
+<p>
+  Futamura projections are named after Y.Futamura, who described the first two of them in the beginning of 1970s. All three projections were independently discovered by V.Turchin and A.Ershov, who gave them their current name.
+</p>
+
+<p>
+  The beauty of Futamura projections is that they give a rather simple equations for rather complex tools like compilers
+  and compiler generators.
+  However, this immediately raises a question if one can indeed acquire these tools using such a high-level description.
+</p>
+
+<p>
+  Let's assume that we are going to use Futamura projections to implement a compiler from &lambda;aMa to <tt>x86</tt>.
+  Then
+  we, first, need an interpreter
+  <span class="math-tex">\(
+\newcommand{\lama}{\lambda\kern -.1667em \hbox{a}\kern -.1000em \hbox{$\mathcal M$}\kern -.1000em \hbox{a}\ }
+
+    \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+    \Int{\lama}{\texttt{x86}}\)</span> for &lambda;aMa written in <TT>x86</TT> assembler. The task of implementing such
+  an interpreter, while involving
+  some low-level programming, does not look very challenging. Then, we need a specializer
+  <span class="math-tex">\(
+\newcommand{\lama}{\lambda\kern -.1667em \hbox{a}\kern -.1000em \hbox{$\mathcal M$}\kern -.1000em a\ }
+\newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+  \Spec{\texttt{x86}}{\mathcal{L}}\)</span> for <tt>x86</tt>
+  assembler written in some language <span class="math-tex">\(\mathcal{L}\)</span>, not necessarily &lambda;aMa. We can
+  choose any suitable language for this purpose.
+  Having both at hands, we will be able to compile &lambda;aMa-programs to <tt>x86</tt> code using the first Futamura
+  projection:
+</p>
+<p>
+  <span class="math-tex">\(
+\newcommand{\lama}{\lambda\kern -.1667em \hbox{a}\kern -.1000em \hbox{$\mathcal M$}\kern -.1000em a\ }
+
+    \newcommand{\Int}[2]{\mathbf{int}^{\mathcal {#1}}_{\mathcal {#2}}}
+  \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+
+  \SpecS{\texttt{x86}}{\mathcal{L}}\,(\Int{\lama}{\texttt{x86}}\times
+  \displaystyle{\textbf{p}}_{\lama})=\displaystyle{\textbf{p}}_{\texttt{x86}}
+  \)</span>
+</p>
+
+<p>
+  And here comes the hard part: the simplest possible specializer (for example, that guaranteed by the
+  <em>s-m-n</em>—theorem) would produce a very
+  poor machine code; it would, in fact, just link the interpreter with the program, which invalidates the very idea of
+  compilation. In order to
+  acquire a decent result, the specializer has to be non-trivial. The task of developing a non-trivial specializer even
+  for the first Futamura
+  projection is non-trivial as well; nevertheless there are frameworks where this task is solved. For example,
+  <tt>GraalVM</tt> uses the first Futamura projection
+  as a tool for language bootstrapping.
+</p>
+<p>
+  If we move higher in the Futamura projection hierarchy we would need at least one additional specializer
+  <span class="math-tex">\(
+      \newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+  \Spec{L}{L}\)</span>, this time
+  for the language <span class="math-tex">\(\mathcal{L}\)</span>;
+  it can be written in the <span class="math-tex">\(\mathcal{L}\)</span> as well. This specializer has to be even more
+  advanced than
+  <span class="math-tex">\(
+\newcommand{\lama}{\lambda\kern -.1667em \hbox{a}\kern -.1000em \hbox{$\mathcal M$}\kern -.1000em a\ }
+
+\newcommand{\Spec}[2]{\mathbf{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+\newcommand{\SpecS}[2]{{spec}^{\mathcal{#1}}_{\mathcal {#2}}}
+  \Spec{\texttt{x86}}{\mathcal{L}}\)</span> since we expect it to decently specialize more complicated program, than
+  interpreters.
+</p>
+<p>
+  Finally, for the third Futamura projection we need even more advanced specializer since it has to be capable of
+  decently specialize specializer for a
+  specializer. Note, is the third Futamura projections the last two specializers need not necessarily be the same
+  programs, but it is very
+  appealing from both scientific and aesthetic standpoints to have the single, <em>self-applicable</em>, specializer.
+</p>
+<p>
+  Thus, using Futamura projections beyond the first one in practice is still a hard venture. In the middle of 1980s all
+  three projections were
+  implemented by the group led by N.Jones, but this was rather a proof-of-concept than a working industrial technology.
+</p>
