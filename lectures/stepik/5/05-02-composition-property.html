@@ -1,0 +1,218 @@
+<h2>Composition property</h2>
+
+In order to assess the correctness of compilation we need to formally establish a rather expected property of stack machine programs. Let assume
+that we have a program <span class="math-tex">\(p\)</span> and
+there are two configurations <span class="math-tex">\(c\ and\ c^\prime\)</span> such that
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{p}{c^\prime}
+\)</span></p>
+
+In other words, <span class="math-tex">\(p\)</span>,
+being evaluated for the configuration <span class="math-tex">\(c\)</span>,
+completes succesfully with the final configuration <span class="math-tex">\(c^\prime\)</span>. As the instructions
+of <span class="math-tex">\(p\)</span>, according to the semantics, are evaluated succesively one after another this should mean that each <em>subprogram</em> (a continuous sublist
+of instructions) of <span class="math-tex">\(p\)</span>
+completes succesfully for some configurations, derived from <span class="math-tex">\(c\)</span>.
+
+In order to reify this expectation into a formal claim we need to define a concatenation of programs "<span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+
+  \dplus\)</span>":
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+
+  \begin{array}{rclcl}
+  \epsilon & \dplus & p       & = & p\\
+  \iota\,p & \dplus & p^\prime & = & \iota\,(p \dplus p^\prime)
+  \end{array}
+\)</span></p>
+
+We need this operation since there is no other way to "join" programs together: we cannot just take program <span class="math-tex">\(q\)</span>
+and program <span class="math-tex">\(t\)</span>
+and consider <span class="math-tex">\(pq\)</span> as
+a program since there is no such syntactic form. Operation "<span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+\dplus\)</span>" is defined inductively on the first operand; it is, in essence, a list
+concatenation function.
+
+<br>
+<br>
+
+Now we can formulate the following lemma.
+
+<h3></h3>
+<h4>Lemma</h4>(Composition property)
+Let <span class="math-tex">\(p\)</span>,
+<span class="math-tex">\(q\)</span>,
+and <span class="math-tex">\(t\)</span> be stack machine programs
+such that <span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+p=q\dplus t\)</span>.
+Then if for some configurations <span class="math-tex">\(c\)</span>
+and <span class="math-tex">\(c^\prime\)</span>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{p}{c^\prime}
+\)</span></p>
+
+then there exists a configuration <span class="math-tex">\(c^{\prime\prime}\)</span> such that
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{q}{c^{\prime\prime}} and  \trans{c^{\prime\prime}}{t}{c^\prime}
+\)</span></p>
+
+<h4>Proof</h4>
+The proof, of course, goes by induction on the structure of <span class="math-tex">\(q\)</span>.
+
+The base case is <span class="math-tex">\(q=\epsilon\)</span>.
+Then <span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+
+  p=\epsilon\dplus t=t\)</span>
+and the lemma follows vacuously by taking <span class="math-tex">\(c^{\prime\prime}=c\)</span>.
+
+Let <span class="math-tex">\(q=\iota\,q^\prime\)</span>.
+Then <span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+p=q\dplus t=\iota\,(q^\prime\dplus t)\)</span>.
+Obviously, there exists a configuration <span class="math-tex">\(\widetilde{c}\)</span> such that
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{\iota\,\epsilon}{\widetilde{c}}
+\)</span></p>
+
+since there is no way to complete the evaluation of <span class="math-tex">\(p\)</span>
+with the final configuration <span class="math-tex">\(c^\prime\)</span> if its first instruction fails. So
+when we evaluate <span class="math-tex">\(p\)</span>
+in configuration <span class="math-tex">\(c\)</span>
+we have to evaluate <span class="math-tex">\(
+  \newcommand{\dplus}{+\kern -0.4em+}
+q^\prime\dplus t\)</span>
+in configuration <span class="math-tex">\(\widetilde{c}\)</span>. But we
+can apply induction hypothesis here since <span class="math-tex">\(q^\prime\)</span>
+is a subprogram of <span class="math-tex">\(q\)</span>.
+Thus, there exists <span class="math-tex">\(c^{\prime\prime}\)</span> such that
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{\widetilde{c}}{q^\prime}{c^{\prime\prime}}\ and\ \trans{c^{\prime\prime}}{t}{c^\prime}
+\)</span></p>
+
+But from
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{\iota\,\epsilon}{\widetilde{c}}
+\)</span></p>
+
+and
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{\widetilde{c}}{q^\prime}{c^{\prime\prime}}
+\)</span></p>
+
+and the determinism of the semantics it follows
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c}{\iota\,q^\prime=q}{c^{\prime\prime}}
+\)</span></p>
+
+which completes the proof.
+
+<p>
+  The conversion of this property is also true: let <span class="math-tex">\(p\)</span>
+  and <span class="math-tex">\(q\)</span> be such programs that</p>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{p}{c^\prime}\ and\ \trans{c^\prime}{q}{c^{\prime\prime}}
+\)</span></p>
+
+for some configurations <span class="math-tex">\(c\)</span>,
+<span class="math-tex">\(c^\prime\)</span>
+and <span class="math-tex">\(c^{\prime\prime}\)</span>. Then
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\dplus}{+\kern -0.4em+}
+
+  \trans{c}{p\dplus q}{c^{\prime\prime}}
+\)</span></p>
+
+The proof is similar and left to the reader.

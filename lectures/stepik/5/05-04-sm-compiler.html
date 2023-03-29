@@ -1,0 +1,619 @@
+
+
+<h2>Stack Machine Compiler</h2>
+
+In this section we describe a compiler from straigh-line programs language to the abstract stack machine and prove its correctness.
+The first question is what "describe" means. Recall, we already dealt with two understandings of a compiler:
+
+<ul>
+  <li> as a total syntactic transformation from one programming language to another;</li>
+  <li> as a <em>program</em> which implements such a transformation.</li>
+</ul>
+
+Does it not resemble <em>semantics</em>
+and <em>reference interpreter</em>? Let us want to implement a compiler
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  comp : L_1\to L_2
+\)</span></p>
+
+from <span class="math-tex">\(L_1\)</span>
+to <span class="math-tex">\(L_2\)</span>.
+Obviously, we can consider it as a semantics of <span class="math-tex">\(L_1\)</span>
+with semantic domain <span class="math-tex">\(L_2\)</span>. This might look contrived or
+exotic, but, in fact, in the earlier days there existed a (rather extreme) standpoint that the semantics of a language is
+determined by its compiler. If compiler is a semantics, then its implementation as a program is this semantics' interpreter! While
+we may argue if this point of view is desirable from a methodological perspective, we can atleast agree that even if not we can still
+use precisely the same tools we used to specify the semantics to specify a compiler.
+
+In a nutshell, we have to define a transformation
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \sembr{\bullet}^\ph_{comp}:\mathscr{S}\to\mathscr{P}
+\)</span></p>
+
+such that for arbitrary program <span class="math-tex">\(p\in\mathscr{S}\)</span>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \sembr{\sembr{p}^\ph_{comp}}^\ph_{SM}=\sembr{p}^\ph_\mathscr{S}\ \ \ \ \ \ \ \ \ \ \ \ (\clubsuit)
+\)</span></p>
+
+As our source language consists of two syntactic categories, we additionally need to provide a compiler for expressions <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \sembr{\bullet}^\mathscr{E}_{comp}\)</span>.
+In fact, due to the simplicity of both source and target languages, the compiler is quite simple as well. The specification of compiler is shown in
+<a id="expr-comp">Stack machine compiler for expressions</a>
+and <a id="stmt-comp">Stack machine compiler for statements</a>. As we can see we used an already familiar denotational style when the result of compilation is
+directly specified. All expected properties — compositionality and determinism, — are provided trivially, so we atlest can immediately
+conclude that we specified a total function. But why this function indeed provides a correct compilation? We consider this question in the next
+section.
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\dplus}{+\kern -0.4em+}
+  \begin{array}{rcl}
+  \sembr{x}^{\mathscr E}_{comp}&=&\mathbf{[LD \ x]}\\
+  \sembr{n}^{\mathscr E}_{comp}&=&\mathbf{[CONST \ n]}\\
+
+  \sembr{A\otimes B}^{\mathscr E}_{comp}&=&\sembr{A}^{\mathscr E}_{comp}\dplus\sembr{B}^{\mathscr E}_{comp}\dplus[\mathbf{BINOP \ \otimes}]
+  \end{array}
+\)</span></p>
+<p style="text-align: center" id="expr-comp"><em>Stack machine compiler for expressions</em></p>
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\dplus}{+\kern -0.4em+}
+
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \begin{array}{rcl}
+
+  \sembr{\mathbf{x := e}}^\ph_{comp}&=&\sembr{e}^{\mathscr E}_{comp}\dplus\mathbf{[ST \ x]}\\
+  \sembr{\mathbf{read (x)}}^\ph_{comp}&=&\mathbf{[READ][ST \ x]}\\
+  \sembr{\mathbf{write (e)}}^\ph_{comp}&=&\sembr{e}^{\mathscr E}_{comp}\dplus\mathbf{[WRITE]}\\
+  \sembr{\mathbf{S_1;\ S_2}}^\ph_{comp}&=&\sembr{S_1}^\ph_{comp}\dplus\sembr{S_2}^\ph_{comp}
+  \end{array}
+\)</span></p>
+<p style="text-align: center" id="stmt-comp"><em>Stack machine compiler for statements</em></p>
+
+
+<h2>Correctness of the Compiler</h2>
+
+We are going to prove the correctness of the compiler, the property formally expressed by the equation <span class="math-tex">\((\clubsuit)\)</span>.
+Both <span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\sembr{\bullet}^\ph_{SM}\)</span>
+and <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+\sembr{\bullet}^\ph_\mathscr{S}\)</span> are
+defined in terms of corresponding transition relations, so we, apparently, need some statements concerning those relations as well. In addition we need to relate somehow
+the transition relation "<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>"
+for stack machines and denotational semantics for expressions <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{\bullet}^\ph_\mathscr{E}\)</span>. Fortunately, the overall task turns out
+to be not so demanding as it might look at the first glance if an appropriate set of lemmas is formulated.
+
+<h4>Lemma</h4>(Correctness of expression compiler.)
+Let <span class="math-tex">\(e\in\mathscr{E}\)</span> be an expression,
+<span class="math-tex">\(\sigma\in St\)</span> — some state,
+<span class="math-tex">\(s\in\mathbb Z^*\)</span> — stack,
+<span class="math-tex">\(\omega\in\mathscr{W}\)</span> — some world,
+and <span class="math-tex">\(z\in\mathbb Z\)</span> — some number. Then
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{e}^\mathscr{E}_{comp}}{\inbr{\sigma,\,zs,\,\omega}}\Longleftrightarrow\sembr{e}^\ph_\mathscr{E}\,\sigma=z
+\)</span></p>
+<h4>Proof</h4>
+Both directions can be proven by structural induction on <span class="math-tex">\(e\)</span>.
+We do this only in the reverse direction ("<span class="math-tex">\(\Leftarrow\)</span>") and leave the other to the reader.
+<ul>
+  <li>[Base case.] Let <span class="math-tex">\(e=x\in\mathscr{X}\)</span>
+    By the definitions of <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+      \sembr{\bullet}^\mathscr{E}_{comp}\)</span>
+    and <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+      \sembr{\bullet}^\ph_\mathscr{E}\)</span> we have:
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \begin{array}{rcl}
+  \sembr{x}^\mathscr{E}_{comp}&=&\mathbf{[LD\,x]}\\
+  \sembr{x}^\ph_\mathscr{E}\,\sigma&=&\sigma\,(x)
+  \end{array}
+\)</span></p>
+
+    By the condition of the lemma <span class="math-tex">\(\sigma\,(x)=z\)</span>.
+    Finally, by the definition of "<span class="math-tex">\(
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+\transrel\)</span>" we have
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \trans{\inbr{\sigma,\,s,\,\omega}}{[\mathbf{LD\,x}]}{\inbr{\sigma,\,zs,\,\omega}}
+\)</span></p>
+
+    The second case (<span class="math-tex">\(e=n\in\mathbb N\)</span>) is established similarly.</li>
+
+  <li>[Induction step.] Let <span class="math-tex">\(e=l\otimes r\)</span>
+    and let the lemma holds for <span class="math-tex">\(l\)</span>
+    and <span class="math-tex">\(r\)</span>.
+    Again, by the definitions of <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+      \sembr{\bullet}^\mathscr{E}_{comp}\)</span>
+    and <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+      \sembr{\bullet}^\ph_\mathscr{E}\)</span> we have:
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\dplus}{+\kern -0.4em+}
+
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \begin{array}{rcl}
+  \sembr{l\otimes r}^\mathscr{E}_{comp}&=&\sembr{l}^\mathscr{E}_{comp}\dplus\sembr{r}^\mathscr{E}_{comp}\dplus\mathbf{[BINOP\,\otimes]}\\[2mm]
+  \sembr{l\otimes r}^\ph_\mathscr{E}\,\sigma&=&\sembr{l}^\ph_\mathscr{E}\,\sigma\oplus\sembr{r}^\ph_\mathscr{E}\,\sigma
+  \end{array}
+\)</span></p>
+
+    From the condition of the lemma we know that <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+      \sembr{l}^\ph_\mathscr{E}\,\sigma=x\)</span>
+    and <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+      \sembr{r}^\ph_\mathscr{E}\,\sigma=y\)</span>
+    for some <span class="math-tex">\(x\)</span>
+    and <span class="math-tex">\(y\)</span>, and that
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \begin{array}{c}
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{l}^\mathscr{E}_{comp}}{\inbr{\sigma,\,xs,\,\omega}}\\[2mm]
+  \trans{\inbr{\sigma,\,xs,\,\omega}}{\sembr{r}^\mathscr{E}_{comp}}{\inbr{\sigma,\,yxs,\,\omega}}
+  \end{array}
+\)</span></p>
+
+    Applying the composition property twice we get
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\dplus}{+\kern -0.4em+}
+
+  \begin{array}{c}
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{l}^\mathscr{E}_{comp}\dplus\sembr{r}^\mathscr{E}_{comp}}{\inbr{\sigma,\,yxs,\,\omega}}\\[2mm]
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{l}^\mathscr{E}_{comp}\dplus\sembr{r}^\mathscr{E}_{comp}\dplus\mathbf{BINOP\,\oplus}}{\inbr{\sigma,\,(x\otimes y)s,\,\omega}}
+  \end{array}
+\)</span></p>
+
+    But <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+      x\oplus y=\sembr{l\otimes r}\,\sigma\)</span> which exists by the condition of the lemma.
+</ul>
+
+This lemma ensures the correctness of compliation for expressions: a compiled from an expression stack machine program being executed for some configuration
+succesfully finishes and leaves on the stack the value of this expression in this configuration's state if and only if the same value for the same state
+exists according the semantics of expressions. Neither state nor world is changed, and all the stack values below the top are preserved.
+
+<h4>Lemma</h4>(Correctness of compiler.)
+Let <span class="math-tex">\(p\in\mathscr{S}\)</span> be a straight-line program,
+<span class="math-tex">\(\sigma,\,\sigma^\prime\in St\)</span> — some states,
+<span class="math-tex">\(\omega,\,\omega^\prime\in\mathscr{W}\)</span> — some worlds, and
+<span class="math-tex">\(s,\,s^\prime\in\mathbb{Z}^*\)</span> — some stacks.
+Then
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  {\setsubarrow{_\mathscr{S}}\trans{\inbr{\sigma,\,\omega}}{p}{\inbr{\sigma^\prime,\,\omega^\prime}}}\Longleftrightarrow\trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{p}^\ph_{comp}}{\inbr{\sigma^\prime,\,s^\prime,\,\omega^\prime}}
+\)</span></p>
+<h4>Proof</h4>
+Now we prove the lemma in a forward direction, and leave the opposite one for the reader. The proof, of course, goes by structural induction on <span class="math-tex">\(p\)</span>.
+
+<ul>
+  <li>[Base case.] We only prove the base case for assignment since the other cases can be carbon-copied. Let us have <span class="math-tex">\(p=x\mathbf{:=}e\)</span>. By the condition of the lemma we have
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  {\setsubarrow{_{\mathscr{S}}}\trans{\inbr{\sigma,\,\omega}}{x:=e}{\inbr{\sigma^\prime,\,\omega^\prime}}}
+\)</span></p>
+
+    By the definition of "<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+      {\setsubarrow{_{\mathscr{S}}}\transrel}\)</span>"
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \begin{array}{rcl}
+  \sigma^\prime&=&\sigma\,[x\gets\sembr{e}^\ph_\mathscr{E}\,\sigma]\\
+  \omega^\prime&=&\omega
+  \end{array}
+\)</span></p>
+
+    By the definition of <span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+      \sembr{\bullet}^\ph_{comp}\)</span>
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\dplus}{+\kern -0.4em+}
+
+
+  \sembr{x\mathbf{:=}e}^\ph_{comp}=\sembr{e}^\mathscr{E}_{comp}\dplus[\mathbf{ST\,x}]
+\)</span></p>
+
+    By the correctness of the expression compiler
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\ph}{{\phantom{x}}}
+
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{e}^\mathscr{E}_{comp}}{\inbr{\sigma,\,(\sembr{e}^\ph_\mathscr{E}\,\sigma)s,\,\omega}}
+\)</span></p>
+
+    By the definition of "<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+      \transrel\)</span>"
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \trans{\inbr{\sigma,\,(\sembr{e}^\ph_\mathscr{E}\,\sigma)s,\,\omega}}{\mathbf{ST\,x}}{\inbr{\sigma\,[x\gets\sembr{e}^\ph_\mathscr{E}\,\sigma],\,s,\,\omega}}
+\)</span></p>
+
+    By the composition property for stack machine programs
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\dplus}{+\kern -0.4em+}
+
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{e}^\mathscr{E}_{comp}\dplus[\mathbf{ST\,x}]}{\inbr{\sigma\,[x\gets\sembr{e}^\ph_\mathscr{E}\,\sigma],\,s,\,\omega}}
+\)</span></p>
+    which completes the proof for the base case.
+
+  </li>
+  <li>[Induction step.] There is only one construct which requires induction step to be proven. Let us have <span class="math-tex">\(p=s_1\mathbf{;}s_2\)</span>.
+    By the definition of "<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+        {\setsubarrow{_\mathscr{S}}\transrel}\)</span>" there exist
+    <span class="math-tex">\(\sigma^{\prime\prime}\in St\)</span> and
+    <span class="math-tex">\(\omega^{\prime\prime}\in\mathscr{W}\)</span> such that
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\trule}[2]{\frac{#1}{#2}}
+
+  {\setsubarrow{_\mathscr{S}}
+  \trule{\trans{\inbr{\sigma,\,\omega}}{s_1}{\inbr{\sigma^{\prime\prime},\,\omega^{\prime\prime}}}\quad\trans{\inbr{\sigma^{\prime\prime},\,\omega^{\prime\prime}}}{s_2}{\inbr{\sigma^\prime,\,\omega^\prime}}}
+  {\trans{\inbr{\sigma,\,\omega}}{s_1\mathbf{;}s_2}{\inbr{\sigma^\prime,\,\omega^\prime}}}}
+\)</span></p>
+
+    By induction hypotheses
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{s_1}^\ph_{comp}}{\inbr{\sigma^{\prime\prime},\,s^{\prime\prime},\,\omega^{\prime\prime}}}
+\)</span></p>
+
+    and
+
+    <p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \trans{\inbr{\sigma^{\prime\prime},\,s^{\prime\prime},\,\omega^{\prime\prime}}}{\sembr{s_2}^\ph_{comp}}{\inbr{\sigma^\prime,\,s^\prime,\,\omega^\prime}}
+\)</span></p>
+
+    for some stack <span class="math-tex">\(s^{\prime\prime}\)</span>. By the composition property of stack machine programs the lemma follows.
+  </li>
+</ul>
+
+One might notice that the stack behaviour in the last lemma is somewhat weird: no certain conditions are put on it contents. This is because the stack, actually, is only temporarily
+used within the execution of stack machine subprogram, compiled from a statement. Once the execution of each such subprogram is finished, no extra values remain on the stack. In
+other words, if (in the conditions of the lemma)
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \trans{\inbr{\sigma,\,s,\,\omega}}{\sembr{p}^\ph_{comp}}{\inbr{\sigma^\prime,\,s^\prime,\,\omega^\prime}}
+\)</span></p>
+
+then <span class="math-tex">\(s=s^\prime\)</span>. We leave the proof to the reader.
+
+<h2>Optimality Property</h2>
+
+The final question we are going to address is how good the compiler we've described is. Obviously it is good enough to be total and fully correct, but isn't it what
+we expect from any compiler? To be more specific, we are interested in the <em>efficiency</em> of compiled programs.
+
+In more formal terms, let
+<span class="math-tex">\(\mu\)</span> be some way to measure the "efficiency" of programs in a language
+<span class="math-tex">\(\mathscr{M}\)</span>:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \mu : \mathscr{M}\to \mathbb{R}
+\)</span></p>
+
+The nature of
+<span class="math-tex">\(\mu\)</span> is not important for now; it is sufficient to assume that
+<span class="math-tex">\(\mu\)</span> if total and allows us to compare programs (the less
+<span class="math-tex">\(\mu\)</span> the "better" program is). Let us
+have a compiler
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  comp : \mathscr{L}\to\mathscr{M}
+\)</span></p>
+
+We say that <span class="math-tex">\(comp\)</span> is <em>optimal</em>
+w.r.t.
+<span class="math-tex">\(\mu\)</span> iff for arbitrary
+<span class="math-tex">\(p\in\mathscr{L}\)</span> and arbitrary
+<span class="math-tex">\(q\in\mathscr{M}\)</span> such that
+<span class="math-tex">\(p\equiv q\)</span> the following relation holds:
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \mu\,(comp\,(p))\le\mu\,(q)
+\)</span></p>
+
+<p>  In other words,
+  <span class="math-tex">\(comp\)</span> provides the "best" (w.r.t.
+  <span class="math-tex">\(\mu\)</span>) equivalent to
+  <span class="math-tex">\(p\)</span> program in the target language.
+</p>
+
+<p> How hard is to build an optimal (in this sense) compiler? From the computability theory we know, that if
+  <span class="math-tex">\(\mathscr{L}\)</span> is Turing-complete, then this problem is undecidable and
+  thus no optimal compiler can exist*
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  \begin{array}{rcl}
+  \mu\,(\epsilon)&=&0\\
+  \mu\,(\iota\,p)&=&1+\mu\,(p)
+  \end{array}
+\)</span></p>
+
+Do we have an optimal compiler w.r.t. this concrete <span class="math-tex">\(\mu\)</span>?
+
+A quick analysis reveals — no, we don't. Indeed, take for example the program <code>write (2+3)</code>. By the definition of our compiler
+
+<p style="text-align:center">
+<span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+
+  \sembr{\mathbf{write (2+3)}}^\ph_{comp}=[\mathbf{CONST 2; CONST 3; BINOP+; WRITE}]
+\)</span></p>
+
+while stack machine program
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  [\mathbf{CONST 5; WRITE}]
+\)</span></p>
+
+does exactly the same and shorter. But maybe we can implement some improvements like constant folding etc., which will fix the inoptimality?
+
+The theory says no. Indeed, let <span class="math-tex">\(p\,(x_1,\dots,x_k)\)</span> be a polynomial of multiple natural variables and natural coefficients. An equation
+
+<p style="text-align:center">
+<span class="math-tex">\(
+  p\,(x_1,\dots,x_k)=0
+\)</span></p>
+
+is called <em>diophantine</em>. Can we find its roots? As each
+<span class="math-tex">\(x_i\)</span> spans a countable set, so do all tuples
+<span class="math-tex">\(x_1,\dots,x_k\)</span>. We can systematically
+enumerate all these tuples and evaluate the value of <span class="math-tex">\(p\)</span> for each. This simple procedure will deviler us a root provided that the root exists.
+
+<p> However, if there is no natural root, the procedure will continue infinitely. Can there be other, more advanced procedure to find the roots of
+  a diophantine equation, which would not loop forever if no roots exist?
+</p>
+<p>
+  This very question is known as 10th Hilbert Problem, and it took almost 70 years to solve it negatively. Now we know that the problem of
+  determining the <em>lack</em> of roots for diophantine equation is undecidable.
+</p>
+<p>
+  Let's now assume that we have an optimal compiler for straight-line programs language. Let's take an arbitrary polynomial <span class="math-tex">\(p\,(x_1,\dots,x_k)\)</span> and
+  compile the following program:
+</p>
+<pre><code>
+  read (<span class="math-tex">\(x_1\)</span>);
+  <span class="math-tex">\(\dots\)</span>
+  read (<span class="math-tex">\(x_k\)</span>);
+  write (<span class="math-tex">\(p\,(x_1,\dots,x_k)\)</span> != 0)
+  </code></pre>
+
+<p>If <span class="math-tex">\(p\)</span>
+  does not have roots, the expression <span class="math-tex">\(p\,(x_1,\dots,x_k)\)</span> != 0 will always be evaluated to 1.
+  Look at the
+  compiled stack machine program: if it consists of only two instructions <code>[CONST 1; WRITE]</code> then <span class="math-tex">\(p\)</span> does not have roots. Thus,
+  assuming the existence of an optimal compiler we acquired the decision procedure for a problem which is already known to be undecidable, which
+  means that optimal compilation is undecidable as well. This proof technique is called "Turing reduction"; it constitutes one of the main tools
+  to establish undecidabilities.</p>
+
+<p>*For non-trivial
+  <span class="math-tex">\(\mu\)</span>; we can take, for example,
+  <span class="math-tex">\(\mu\equiv 0\)</span>, which would make <em>any</em> compiler optimal.}.
+  But what about our case? The language of straight-line programs is obviously not Turing-complete; in fact, it is very weak — we can not,
+  for example, even calculate exponent, which is primitively recursive. Actually, we can only calculate <em>polynomials</em> of multiple variables. Let take the simplest
+  measure for stack machine program — its length:</p>

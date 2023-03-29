@@ -1,0 +1,221 @@
+
+
+<h2>Stack Machine Interpreter</h2>
+
+<p>Our next task is implementing the interpreter for stack machine. Given the simplicity of the language one may wonder if
+  this subject deserves a separate section.</p>
+
+<p>It definitely would not if we, indeed, were going to present only the same kind of interpreter (actually called
+  <em>simple recursive interpreter</em>) as for the straight-line programs language. However, in the case of
+  abstract machines the assortment of approaches to interpreter implementation is much broader. Indeed, unlike source-level interpreters,
+  which main feature is to follow the semantics as close as possible, abstract machine interpreters often play the role of
+  a real runtime environment. Thus, the performance issue comes up.</p>
+
+<p>We consider here three types of interpreters: the simple recursive one, iterative non-recursive, and <em>threaded code</em> interpreter. It is worth
+  mentioning that, as long as we implement these kinds of interpreters in &lambda;aMa, their performance will remain roughly the same. However,
+  "the real" abstract machine interpreters as a rule are implemented in a lower level than &lambda;aMa languages — <span style="font-variant-caps: all-small-caps">C</span> or, perhaps,
+  assembler, and in those languages the techniques we discuss indeed deliver essential speedup.</p>
+
+<p>Our first interpreter (<a id="simple-recursive">Simple recursive interpreter</a>) literally encodes the operational semantics. Stack machine program (<code>insns</code>) is
+  represented as a list of instructions, and each instruction is directly represented as an S-expression. The big-step transition relation is
+  encoded using nested function <code>eval</code> which takes a configuration and a program, branches on the first instruction
+  (if any), calculates the next configuration and recursively calls itself with the new configuration and the remaining
+  part of the program. The branching corresponds to the choice of the semantics' rule, recursive call — to the calculation in rule's
+  primise, and the case of empty list — to the application of the axiom. It is easy to see that the configuration of recursive calls
+  repeats the shape of derivation "tower": unless the program is non-empty the interpreter keeps calling itself with updated
+  configuration, and once the program ends the final configuration is propagated as the return value of resursive calls. The
+  function <code>evalOp</code> is exactly the same as in <a id="binary-int">Binary operators interpreter</a>, which is unsurprising since it is exactly the same
+  in the semantics as well. The "surface" semantics <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \sembr{\bullet}_{SM}\)</span> is implemented by the function <code>evalSM</code>, which
+  takes an input stream, a program, makes initial configuration, runs the machine and returns the output stream of the final
+  configuration (if any).</p>
+
+<pre><code>
+fun evalSM (input, insns) {
+  fun eval (c@[st, s, w], insns) {
+    case insns of
+      {} -> c
+    | i : insns ->
+        eval (
+          case i of
+            READ       -> let [n, w] = readWorld (w) in
+                           [n : st, s, w]
+          | WRITE      -> let n : st = st in
+                           [st, s, writeWorld (n, w)]
+          | BINOP (op) -> let y : x : st = st in
+                           [evalOp (op) (x, y) : st, s, w]
+          | CONST (n)  -> [n : st, s, w]
+          | LD    (x)  -> [s (x) : st, s, w]
+          | ST    (x)  -> let n : st = st in
+                           [st, s <- [x, n], w]
+          esac,
+          insns
+        )
+    esac
+  }
+
+  eval ([{}, emptyState, createWorld (input)], insns)[2].getOutput
+}
+  </code></pre>
+<p id="simple-recursive" style="text-align: center"><em>Simple recursive interpreter</em></p>
+
+<p>The interpeter of this kind is an ideal tool to provide a literal encoding for the semantics. However, from the performance standpoint
+  it lacks a lot. First of all, it is easy to see that the depth of recursive calls is equal to the length of the program being interpreted.
+  This means that for long programs the interpreter most likely will crush due to the call stack overflow (unless &lambda;aMa compiler implements a special
+  transformation called <em>tail call elimination</em>). Then, we represent programs as lists, which is completely ok if the objective is
+  to follow the specification literally. However, it is rather obvious that this representation is excessive: as programs do
+  not change in the course of interpretation we pay extra space taken by lists for nothing. In addition lists are not random-access
+  structures — we can not get their arbitrary elements without extra efforts. In our case when programs are executed strictly
+  successively this does not matter as we only take the tail of a list (in <em>constant</em> time) each time we switch to the next
+  instruction. However, for more advanced languages with control flow this will no longer be the case, and the slow access to an
+  arbitrary instruction can become an issue. Similarly, we represent states as functions in strong accordance with the semantics; however
+  is is obvious that from performance standpoint this representation is not the best choice — there is only a finite number of
+  variables in each program, and this number does not change.</p>
+
+<p>Thus, our next version is a <em>simple iterative</em> iterpreter. We make the following changes to the program and configuration
+  representations:</p>
+
+<ul>
+  <li>we represent programs as <em>arrays</em> of instructions rather then lists;</li>
+  <li>we represent variables by numbers, not names;</li>
+  <li>we represent states as arrays of numbers, indexed by variables.</li>
+</ul>
+
+<p>These changes require a conversion of initial program and configuration representations to the new one — we need, for example, enumerate
+  all varables in given program, etc. The implementation of this simple conversion is left to the reader.
+</p>
+<p>The iterative interpreter is shown in <a id="simple-iterative">Simple iterative interpreter</a>.
+  The interpreter takes an input, a program as array of instructions, and a number of
+  variables in the program. As the interpreter simply iterates over the instructions' array (using integer variable <code>ip</code>, "instruction pointer"),
+  we no longer need nested recursive function. We keep stack, world, and state as mutable data structures and provide helper functions
+  <code>push</code>
+  and <code>pop</code> to encapsulate conventional operations for the stack. The state is represented as an array of
+  integers, and we use regular array access constructs of &lambda;aMa to operate on the state. Otherwise, the implementation resembles that for
+  simple recursive case. We still represent the instructions as S-expressions, although now the arguments of instructions <TT>LD</TT> and <TT>ST</TT>
+  are integers, not strings. If we were implementing the interpreter in a lower level language like <span style="font-variant-caps: all-small-caps">C</span> we, probably, would use
+  another enoding for the instructions using integer numbers/bit-field structures, which would improved the performance even more, but as the
+  demonstration of the idea this version is sufficient.</p>
+
+<p>There is, however, one interesting and important observation which we have to make: as we switched from state-as-functions to state-as-arrays
+  representation we lost the ability to detect the use of non-initialized variables! Thus, strictly speaking we <em>do not</em>
+  have a fully correct interpreter anymore, but only a partially correct. For example, the semantics of the program</p>
+
+<pre><code>  LD x
+  WRITE
+  </code></pre>
+
+is undefined function, but simple iterative interpreter would write 0 for each input, this implementing a <em>different</em> semantics. We could, of course,
+resurrect this lost feature by representing states not by arrays of integers, but by arrays of, say, options; this choice, however, would hamper the
+performance, questioning the very idea of switching the representation for states. This is rather a typical scenario in the field: in order to
+make the implementation more efficient we sometimes have to deviate from the puristic interpretation of the semantics by allowing programs to ignore
+some (but not all!) "pathological" situations. We can not, however, take these decisions arbitrarily; partial correctness sets the boundary
+which we should not cross.
+
+
+<pre><code>
+var st;
+
+fun push (n) {
+  st := n :: st
+}
+
+fun pop () {
+  let x :: st' = st in
+  st := st';
+  x
+}
+
+fun evalSMiterative (input, [insns, numVars]) {
+  var ip, w = createWorld (input);
+  val s = initArray (numVars, fun (_) {0});
+
+  st := {};
+
+  for ip := 0, ip&lt;insn.length, ip := ip+1 do
+    case insn [ip] of
+      READ       -> let [n, w'] = readWorld (w) in
+                     push (n);
+                     w := w'
+    | WRITE      -> w := writeWorld (pop (), w)
+    | BINOP (op) -> let y = pop () in
+                     let x = pop () in
+                     push (evalOp (op) (x, y))
+    | CONST (n)  -> push (n)
+    | LD    (x)  -> push (s [x])
+    | ST    (x)  -> s[x] := pop ()
+    esac
+  done;
+
+  getOutput (w)
+}
+  </code></pre>
+<p id="simple-iterative" style="text-align: center"><em>Simple iterative interpreter</em></p>
+
+<p>Our final kind of interpreter is <em>direct threaded code</em> interpreter. The idea behind this approach is quite simple: we represent each
+  instruction as a function which, being called, performes the same actions as this instuction. Again, as long as we write in &lambda;aMa this
+  representation probably would not deliver us any performance gain; however this technique is a yet another good pattern when using
+  lower-level languages. The benefit of threaded code is that we do not need pattern matching anymore: as each instruction
+  "knows" what to do itself in the main loop of the interpreter we just need to call each function from program array. The
+  implementation of the interpreter is shown in <a href="threaded-interpreter">" Threaded code interpreter"</a>. </p>
+
+<p>Similarly to the previous case we
+  represent the elements of configurations as mutable variables, and for each instruction we provide a function which encodes its semantics.
+  If the instruction in question does not have arguments we can write such a function once and for all; otherwise we need to capture the arguments
+  in the enclosed nested function definition. The main function of the interpreter, again, takes an input, a program in the form of array of
+  functions, and a number of variables. It initializes the configuration and runs throught the program, calling each instruction function.</p>
+
+<pre><code>
+var st, s, w;
+
+fun binop (op) {
+  fun () {
+    let y = pop () in
+    let x = pop () in
+    push (evalOp (op) (x, y))
+  }
+}
+
+fun ld (x) {
+  fun () {
+    push (s [x])
+  }
+}
+
+fun st (x) {
+  fun () {
+    s [x] := pop ()
+  }
+}
+
+fun const (n) {
+  fun () {
+    push (n)
+  }
+}
+
+fun read () {
+  let [n, w'] = readWorld (w) in
+  s [x] := n;
+  w      w'
+}
+
+fun write () {
+  w := writeWorld (pop (), w)
+}
+
+fun evalSMthreaded (input, [insns, numVars]) {
+  var ip;
+
+  s  := initArray (numVars, fun (_) {0});
+  st := {};
+  w  := createWorld (input);
+
+  for ip := 0, ip&lt;insn.length, ip := ip+1 do
+    insn [ip] ()
+  done;
+
+  getOutput (w)
+}
+  </code></pre>
+<p id="threaded-interpreter" style="text-align: center"><em>Threaded code interpreter</em></p>
