@@ -8,9 +8,7 @@
 <!--the compiler we will be working on: source-level interpreter, stack machine compiler and interpreter, and-->
 <!--<tt>x86</tt> code generator.-->
 
-
-<h1>Expressions</h1>
-
+<h2>Abstract Syntax</h2>
 
 Syntactically, our language incorporates two <em>syntactic categories</em>: expressions and statements. We start from describing
 so-called <em>abstract syntax</em>
@@ -52,9 +50,12 @@ and <span class="math-tex">\(e_2\)</span> is also expression.
 <p><img alt="Abstract Syntax for Expressions" height="620" name="image.png" src="https://ucarecdn.com/dddf55a7-8bf1-443a-8e1b-ca5da032ee1f/" width="1272" /></p>
 <p style="text-align: center">Abstract Syntax for Expressions</p>
 
-We call this definition <em>abstract</em> syntax because it describes nothing more than a subordination between elementary constructs. In order to represent
+We call this definition <em>abstract</em> syntax because it describes nothing more than a subordination between elementary constructs.
+
+<h2>Concrete Syntax</h2>
+In order to represent
 expressions in some medium, however, we need <em>concrete</em> syntax; it is easy to anticipate that there can be multiple concrete syntaxes for given
-abstract one. In figure below (Various Concrete Syntaxes for Expression Language) we give some examples of those for expressions: the first (<em>a</em>) consists of graphical elements such as
+abstract one. In figure below we give some examples of those for expressions: the first (<em>a</em>) consists of graphical elements such as
 circles, lines, texts, etc. Another one (<em>b</em>)
 is the familiar <em>infix notation</em> which includes numbers, letters, binary
 operators and brackets. Yet another (but by no means the last one) is <em>reverse Polish notation</em>
@@ -101,7 +102,7 @@ as a rule, denotational semantics gives us a very abstract, high-level view on t
 practical standpoint.
 
 
-The denotational semantics for expressions is shown in figure below ().
+The denotational semantics for expressions is shown in figure below.
 <p style="text-align:center" id="se-denot"><span class="math-tex">\(
 \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
 \newcommand{\ph}{{\phantom{x}}}
@@ -152,7 +153,7 @@ The correspondence between <span class="math-tex">\(\otimes\)</span> and
   <tr><td>≥</td>     <td>>=</td></tr>
   <tr><td>=</td>       <td>=</td></tr>
   <tr><td>≠</td>     <td>!=</td></tr>
-  <tr><td>∧</td>  <td>&&</td>|</tr>
+  <tr><td>∧</td>  <td>&&</td></tr>
   <tr><td>∨</td>   <td>!!</td> </tr>
 </table>
 
@@ -170,14 +171,13 @@ substituted coherently according to the table given above.</p>
 
 <p>First, in given semantics there is a single rule for any "kind" of expression (variable, constant, binary operation), and for each rule its right part defines
 semantic function unambiguously. Thus, for each expression <span class="math-tex">\(e\)</span>
-and each state <span class="math-tex">\(\sigma\)</span> there is <em>at most</em> one
-integer number <span class="math-tex">\(y\)</span> such that</p>
+and each state <span class="math-tex">\(\sigma\)</span> there is <em>at most</em> one integer number <span class="math-tex">\(y\)</span> such that</p>
 
 <p style="text-align:center"><span class="math-tex">\(
 \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
 \newcommand{\ph}{{\phantom{x}}}
 
-  \sembr{e}^\ph_\mathscr{E}\,\sigma=x
+  \sembr{e}^\ph_\mathscr{E}\,\sigma=y
 \)</span></p>
 
 
@@ -240,8 +240,8 @@ all its subexpression are <span class="math-tex">\((x+2)*y\)</span>,
 <span class="math-tex">\(x\)</span>,
 and <span class="math-tex">\(2\)</span>.
 
-<!--\begin{lemma}[Strictness]-->
-<blockquote>
+<h4>Lemma:</h4>
+[ALERT-primary]
   For all <span class="math-tex">\(e, \sigma \ and\  x\)</span> if
 
 <p style="text-align:center">  <span class="math-tex">\(
@@ -260,11 +260,10 @@ there exists <span class="math-tex">\(x^\prime\)</span> such that
 
     \sembr{e^\prime}^\ph_\mathscr{E}\,\sigma=x^\prime
 \)</span></p>
-</blockquote>
-<!--\end{lemma}-->
+[/ALERT]
 
-<!--\begin{proof}-->
 <h4>Proof:</h4>
+<details>
   For base case (variable and constant) the lemma holds vacuously since in both cases
   the only possible subexpressions are these expressions themselves.
 
@@ -313,15 +312,15 @@ and <span class="math-tex">\(x_2\)</span> such that
   \end{array}
 \)</span></p>
 
-  If <span class="math-tex">\(e^\prime=e_1\)</span> or
-<span class="math-tex">\(e^\prime=e_2\)</span> then the lemma follows immediately.
-  If <span class="math-tex">\(e^\prime\preceq e_1\)</span>
+  <p>If <span class="math-tex">\(e^\prime=e_1\)</span> or <span class="math-tex">\(e^\prime=e_2\)</span> then the lemma follows immediately.</p>
+
+  <p>If <span class="math-tex">\(e^\prime\preceq e_1\)</span>
 (or <span class="math-tex">\(e^\prime\preceq e_2\)</span>) the induction hypothesis can be applied as we just have proven that
   both <span class="math-tex">\(e_1\)</span> and
 <span class="math-tex">\(e_2\)</span>
-have some values being evaluated in the state <span class="math-tex">\(\sigma\)</span>.
-<!--\end{proof}-->
-
+have some values being evaluated in the state <span class="math-tex">\(\sigma\)</span>.</p>
+</details>
+  <br>
 The strictness property, in particular, means that if variable <span class="math-tex">\(x\)</span>
 is undefined in some state <span class="math-tex">\(\sigma\)</span>, then
 any expression <span class="math-tex">\(e\)</span>,
@@ -359,8 +358,7 @@ undefined due to the division by zero.</p>
 
 <p>
 The second question was if <span class="math-tex">\(1+x-x\)</span>
-is equivalent to 1. Again, by the strictness and the
-fact that <span class="math-tex">\(x \preceq 1+x-x\)</span> we immediately have that for the <em>empty state</em>
+is equivalent to 1. Again, by the strictness and the fact that <span class="math-tex">\(x \preceq 1+x-x\)</span> we immediately have that for the <em>empty state</em>
 <span class="math-tex">\(\Lambda\)</span>,
 undefined for every variable <span class="math-tex">\(x\)</span>,
 <span class="math-tex">\(

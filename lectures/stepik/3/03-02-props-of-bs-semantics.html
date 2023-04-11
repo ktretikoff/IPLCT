@@ -1,0 +1,1558 @@
+
+<h1>Statements</h1>
+
+The other syntactic category of the straight line programs language is <em>statements</em>. Its abstract syntax is given by the following
+description:
+
+<p style="text-align:center"><span class="math-tex">\(
+\begin{array}{rcl}
+  \mathscr S & = & \textbf{skip} \\
+             &   & \mathscr X \textbf{:=} \;\mathscr E \\
+             &   & \textbf{read (} \mathscr X \textbf{)} \\
+             &   & \textbf{write (} \mathscr E \textbf{)} \\
+             &   & \mathscr S \textbf{;} \mathscr S
+\end{array}
+\)</span></p>
+
+Here <span class="math-tex">\(\mathscr E\)</span> and
+<span class="math-tex">\(\mathscr X\)</span> stand for the sets of expressions and variables, as in the previous section. The first four lines of abstract
+syntax description define four <em>primitive</em> statements: empty, assignment, input and output respectively. The fifth one makes it possible to
+combine primitive statements info compositions. The order and subordination of composition counterparts strictly speaking is essential, thus
+
+<pre><code>
+   read (x); (y := x+4; write (y))
+</code></pre>
+
+and
+
+<pre><code>
+   (read (x); y := x+4); write (y)
+</code></pre>
+
+are different statements; we use here brackets as elements of concrete syntax to reflect the grouping of subtrees of abstract syntax tree.
+To reduce the use of brackets we assume that composition by default associates to the <em>right</em> (i.e. as in the former example).
+
+
+<h2>Big-Step Operational Semantics</h2>
+
+<p>Our next step is to define the semantics for statements. First, as always, we need to specify the semantic domain.
+From the syntactic form of statements it should be clear that we are dealing with the language with <em>side effects</em>: there are read and write statements,
+which, presumably, communicate with outer world, and assignment, which, presumably, changes the values of variables. These two kinds of side effects
+play different roles: while read and write make the effect of a program execution <em>externally observable</em>, assignments define internal behavior.
+Thus, essentially different by their internal behavior programs can be indistinguishable while observed externally. We reflect this consideration by
+choosing the semantic domain to be the set of functions from input streams of integers to output streams of integers
+</p>
+<p style="text-align:center"><span class="math-tex">\(
+  \mathbb{Z}^*\to\mathbb{Z}^*
+\)</span></p>
+
+We call the pair of input-output streams <em>world</em> and define the set of all worlds to be
+
+<p style="text-align:center"><span class="math-tex">\(
+  \mathscr W = \mathbb Z^* \times \mathbb Z^*
+\)</span></p>
+
+For simplicity, we define the following operations for worlds:
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\primi}[1]{\mathbf{#1}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \begin{array}{rcl}
+  \primi{read}\,{\inbr{xi,\,o}}    & = & \inbr{x,\,\inbr{i,\,o}}\\
+  \primi{write}\,{x\,\inbr{i,\,o}} & = & \inbr{i,\,ox}\\
+  \primi{out}\,{\inbr{i,\,o}}      & = & o
+\end{array}
+\)</span></p>
+
+
+The first one, "<span class="math-tex">\(
+  \newcommand{\primi}[1]{\mathbf{#1}}
+  \primi{read}\)</span>",
+takes a world in which input stream <span class="math-tex">\(xi\)</span>
+contains at least one element <span class="math-tex">\(x\)</span>
+and returns a pair of elements: <span class="math-tex">\(x\)</span> and the residual
+word with the first element of input stream removed. The next one, "<span class="math-tex">\(
+  \newcommand{\primi}[1]{\mathbf{#1}}
+  \primi{write}\)</span>",
+to some extent does the opposite: it takes some number <span class="math-tex">\(x\)</span> and a world and
+returns a world in which this number is appended to the end of the output stream. Finally, "<span class="math-tex">\(
+  \newcommand{\primi}[1]{\mathbf{#1}}
+  \primi{out}\)</span>" just returns the output stream of a given world.
+
+
+  <p style="text-align:center" id="bs_stmt"><span class="math-tex">\(
+\newcommand{\primi}[1]{\mathbf{#1}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+\newcommand{\llang}[1]{\mathbf{#1}}
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ruleno}[1]{[\textsc{#1}]}
+\newcommand{\textsc}[1]{#1}
+
+
+\setarrow{\xrightarrow}
+\setsubarrow{^\ph_{\mathscr S}}
+    \def\arraystretch{3}
+  \begin{array}{cr}
+    \trans{c}{\llang{skip}}{c} & \ruleno{Skip}\\
+    \trans{\inbr{\sigma,\, \omega}}{\llang{x := (\;\;e)}}{\inbr{\sigma\,[x\gets\sembr{e}^\ph_{\mathscr E}\;\sigma],\,\omega}} & \ruleno{Assign} \\
+    \trule{\inbr{z,\,\omega^\prime}=\primi{read}{\,\omega}}
+          {\trans{\inbr{\sigma,\, \omega}}{\llang{read (x)}}{\inbr{\sigma\,[x\gets z],\,\omega^\prime}}} & \ruleno{Read} \\[5mm]
+    \trans{\inbr{\sigma,\, \omega}}{\llang{write (e)}}{\inbr{\sigma,\, \primi{write}{\,(\sembr{e}^\ph_{\mathscr E}\;\sigma)\, \omega}}}& \ruleno{Write} \\
+    \trule{\begin{array}{cc}
+              \trans{c_1}{s_1}{c^\prime} & \trans{c^\prime}{s_2}{c_2}
+           \end{array}}
+          {\trans{c_1}{s_1\llang{;}s_2}{c_2}} & \ruleno{Seq}
+  \end{array}
+  \)</span></p>
+<p style="text-align: center">Big-step operational semantics for statements</p>
+
+<p>To define the semantics we could use the denotational style as we did for expressions, and it would work just fine. However, as our language starts to evolve,
+the denotational style will be harder to adjust to meet our intentions; in addition studying yet another way for semantics' specification would make us more
+versatile.</p>
+
+<p>The technique we are going to use is called <em>big-step operational semantics</em>. Unlike denotational case, where a semantic object
+is immediately given for each syntactic form, operational style involves the construction of intermediate <em>evaluation relation</em>, which we denote
+  "<span class="math-tex">\(
+    \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+    \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+    \transrel\)</span>". From the semantics of expressions we already know the notion of state and how to calculate the
+values of expressions in given states. Thus, each statement modifies an <em>enriched</em> state which consists of a regular state and a world. We call this
+enriched state <em>configuration</em> and define the set of all configurations to be
+</p>
+<p style="text-align:center"><span class="math-tex">\(
+  \mathscr{C} = St \times \mathscr W
+\)</span></p>
+
+Evaluation relation connects a statement and two configurations: <em>initial</em>
+and <em>final</em>:
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\subseteq \mathscr{C}\times\mathscr{S}\times\mathscr{C}
+\)</span></p>
+
+We will use infix notation to denote the elements of evaluation relation: instead of
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \inbr{c_1,\,s,\,c_2}\in\transrel
+\)</span></p>
+
+we will use the form
+
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c_1}{s}{c_2}
+\)</span></p>
+
+
+where <span class="math-tex">\(c_1,\,c_2\in\mathscr{C}\)</span>
+and <span class="math-tex">\(s\in\mathscr{S}\)</span>. The informal meaning of this notation is
+"the evaluation of a statement <span class="math-tex">\(s\)</span>
+in a configuration <span class="math-tex">\(c_1\)</span>
+completes with the configuration <span class="math-tex">\(c_2\)</span>". As the
+statement <span class="math-tex">\(s\)</span> can have arbitrarily complex structure this semantic style is called "big-step" since
+the evaluation relation "<span class="math-tex">\(
+      \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>"
+immediately delivers us the final configuration <span class="math-tex">\(c_2\)</span> as if
+the computations were performed in one big step, without observable subdivision to computations
+of smaller components of <span class="math-tex">\(s\)</span>.
+
+The relation "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>" is defined by the following deductive system (see <a href="#bs_stmt">Big-step operational semantics for statements</a>).
+The system consists of five rules each of which has the following generic form
+
+<p style="text-align:center"><span class="math-tex">\(
+\dfrac{\textit{premise}\dots\textit{premise}}{\textit{conclusion}}
+\)</span></p>
+
+The informal meaning of a rule is that the conclusion holds under the condition that all the premises hold. As
+we use this system to define the relation "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>" the conclusions of the rules always have
+the form
+
+<p style="text-align:center"><span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c_1}{s}{c_2}
+\)</span></p>
+
+<p>
+for some <span class="math-tex">\(c_1,\,c_2\)</span>
+and <span class="math-tex">\(s\)</span>. Sometimes a rule does not contain premises, or there is no premise which
+contains "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>"; such rules are called <em>axioms</em>. Finally, we mark each rule with
+a label on the right for reference; these labels are not a part of the deductive system and play
+role of comments.
+</p>
+<p>
+We now give detailed comments for each rule to explain the whole idea of using a deductive system to
+specify semantics in whole, and big-step operational semantics in particular.
+</p>
+<p>
+The first rule, <span class="math-tex" style="font-variant: small-caps">\(Skip\)</span>, defines the semantics of the <code>skip</code> statement. It is an
+axiom which tells us that the evaluation of <code>skip</code> statement does not change the configuration.
+</p>
+The next one, <span class="math-tex" style="font-variant: small-caps">\(Assign\)</span>, deals with assignments. It is also an axiom, which tells us that an
+assignment never changes a world (notice the second component of configuration, which is left unchanged).
+As for the state component, first, we evaluate the value of expression <span class="math-tex">\(e\)</span>
+in given state <span class="math-tex">\(\sigma\)</span> using
+the semantics for expressions <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{E}\)</span>, defined in the previous section. Then we
+substitute the value for variable <span class="math-tex">\(x\)</span>
+in the state with calculated value using the primitive <span class="math-tex">\(\bullet\,[\bullet\gets \bullet]\)</span>
+which has the following definition:
+
+<p style="text-align:center"><span class="math-tex">\(
+  \sigma\,[x\gets v]\,y=\left\{\begin{array}{rcl}
+                                \sigma\,y & , & y \ne x\\
+                                v & , & y = x
+                             \end{array}
+                   \right.
+\)</span></p>
+
+Thus, for a state <span class="math-tex">\(\sigma\)</span>,
+variable <span class="math-tex">\(x\)</span>,
+and value <span class="math-tex">\(v\)</span>
+the state <span class="math-tex">\(\sigma\,[x\gets v]\)</span>
+assigns <span class="math-tex">\(v\)</span>
+to <span class="math-tex">\(x\)</span> and leaves other
+variables unchanged.
+
+Two next rules, <span class="math-tex" style="font-variant: small-caps">\(Read\)</span>
+and <span class="math-tex" style="font-variant: small-caps">\(Write\)</span>, describe the semantics for <code>read</code> and
+<code>write</code> constructs. In both cases the definitions use corresponding primitives for worlds: in <span class="math-tex" style="font-variant: small-caps">\(Read\)</span>
+we extract the next value <span class="math-tex">\(z\)</span> (if any) from the input stream and return the modified state, in which the variable being
+read is associated with <span class="math-tex">\(z\)</span>, and remaining world.
+In <span class="math-tex" style="font-variant: small-caps">\(Write\)</span> we first calculate the value of the expression
+being written in current state and put it into the output stream of the word. Note, both rules are axioms as well:
+although <span class="math-tex" style="font-variant: small-caps">\(Read\)</span>
+has a premise, this premise does not contain "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>".
+
+<p>
+Finally, the last rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> prescribes the semantics for the sequential composition. This time it is
+not an axiom, and it tells us that in order to evaluate the composition of two statements we first need to
+evaluate the first one, obtaining some intermediate configuration <span class="math-tex">\(c^\prime\)</span>, and then the second one, using
+this intermediate configuration as input. Note, the order of evaluation is defined not by the order of
+premises, but by their nature: regardless the order in which the premises are given it is impossible
+to calculate <span class="math-tex">\(c_2\)</span>
+unless <span class="math-tex">\(c^\prime\)</span> is calculated first.
+</p>
+<p>
+With the relation "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>" defined we can abbreviate the "surface" semantics for the language of statements:
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\primi}[1]{\mathbf{#1}}
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+       \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+
+  \trule{\trans{\inbr{\Lambda,\,\inbr{i,\,\epsilon}}}{s}{\inbr{\sigma,\,\omega}}}
+      {\sembr{s}^\ph_{\mathscr S}\,i=\primi{out}{\,\omega}}\ \ \ \ \ \ \ \ \ \ \ (\star)
+\)</span></p>
+\label{surface-semantics}
+
+<p>This rule (which is <em>not</em> a part of big-step operational semantics) establishes a connection between
+evaluation relation "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>"
+and the semantics for statements <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{S}\)</span>. In order
+to calculate the output stream for given input sream <span class="math-tex">\(i\)</span> we first construct an initial configuration
+</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \inbr{\Lambda,\,\inbr{i,\,\epsilon}}
+\)</span></p>
+
+(remember, <span class="math-tex">\(\Lambda\)</span>
+stands for the empty state), then calculate the final configuration <span class="math-tex">\(\
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  \inbr{\sigma,\,\omega}\)</span> using
+the evaluation relation, and then extract the output stream of the final world.
+
+Similarly to the denotational case, we can formulate two properties of given semantics:
+
+<ol>
+<li> <em>Determinism</em>:
+given arbitrary <span class="math-tex">\(c\in\mathscr{C}\)</span>
+and <span class="math-tex">\(s\in\mathscr{S}\)</span>
+there exists at most one <span class="math-tex">\(c^\prime\in\mathscr{C}\)</span> such that
+
+<p style="text-align:center">  <span class="math-tex">\(
+         \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c}{s}{c^\prime}
+\)</span></p>
+
+  Indeed, we can see that for each kind of statement and for each initial configurations there is at most one applicable rule.</li>
+
+<li> <em>Compositionality</em>:
+for each non-axiom rule (this time, only <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>) in all its premises only
+  proper subconstructs of the conclusion construct are used (this time, <span class="math-tex">\(s_1\)</span>
+and <span class="math-tex">\(s_2\)</span>
+of <span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  s_1\llang{;}\,s_2\)</span>). Hence,
+  the principle of structural induction can be used to prove the properties of the semantics.
+</li>
+</ol>
+
+We now show by example how big-step operational semantics works. Let us have the following program
+
+<pre><code>
+   read (x); read (y); z := x + y; write (z)
+</code></pre>
+
+and let the input stream be <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  \inbr{2,\,3}\)</span>.
+<p>
+First, according to <span class="math-tex">\((\star)\)</span>, we construct an initial configuration
+and write down what we currently know about the evaluation relation:</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \trans{\inbr{\Lambda,\,\inbr{\inbr{2,\,3},\,\epsilon}}}{\llang{read (x); read (y); z := x + y; write (z)}}{\fbox{?}}
+\)</span></p>
+
+<p>
+We do not know yet what to put instead of <span class="math-tex">\(\fbox{?}\)</span>. To figure it out we need to seek for applicable rule. It turns
+out that the only one rule can be applied, namely <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> (remember, "<code>
+</code>he right). So, we can move one floor up by applying the rule and filling in the parts we already know
+so far:</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trans{\inbr{\Lambda,\,\inbr{\inbr{2,\,3},\,\epsilon}}}{\llang{read (x)}}{\fbox{??}}\quad\trans{\fbox{??}}{\llang{read (y); z := x + y; write (z)}}{\fbox{?}}}
+      {\trans{\inbr{\Lambda,\,\inbr{\inbr{2,\,3},\,\epsilon}}}{\llang{read (x); read (y); z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+<p>In addition to unknown configuration "<span class="math-tex">\(\fbox{?}\)</span>"
+we now have another one, "<span class="math-tex">\(\fbox{??}\)</span>".
+But, now we can apply rule <span class="math-tex" style="font-variant: small-caps">\(Read\)</span> to the
+first premise, which immediately lets us calculate what "<span class="math-tex">\(\fbox{??}\)</span>" is:</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\primi}[1]{\mathbf{#1}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trule{\inbr{2,\,\inbr{\inbr{3},\,\epsilon}}=\primi{read}{\,\inbr{\inbr{2,\,3},\,\epsilon}}}
+             {\trans{\inbr{\Lambda,\,\inbr{\inbr{2,\,3},\,\epsilon}}}{\llang{read (x)}}{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}}\quad
+       \dots}
+      {\trans{\inbr{\Lambda,\,\inbr{\inbr{2,\,3},\,\epsilon}}}{\llang{read (x); read (y); z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+Now we can proceed with the second premise:
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}{\llang{read (y); z := x + y; write (z)}}{\fbox{?}}
+\)</span></p>
+
+Again, we can move one floor up by using the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> (and only it):
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trans{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}{\llang{read (y)}}{\fbox{???}}\quad\trans{\fbox{???}}{\llang{z := x + y; write (z)}}{\fbox{?}}}
+      {\trans{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}{\llang{read (y); z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+And, again, we can apply the rule <span class="math-tex" style="font-variant: small-caps">\(Read\)</span> to the first premise,
+which gives us the value for "<span class="math-tex">\(\fbox{???}\)</span>":
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \newcommand{\primi}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trule{\inbr{3,\,\inbr{\epsilon,\,\epsilon}}=\primi{read}{\,\inbr{\inbr{3},\,\epsilon}}}
+             {\trans{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}{\llang{read (y)}}{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3],\,\inbr{\epsilon,\,\epsilon}}}}\quad
+       \dots}
+      {\trans{\inbr{[\llang{x}\mapsto 2],\,\inbr{\inbr{3},\,\epsilon}}}{\llang{read (y); z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+Moving to the second premise and applyng the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> gives us
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trans{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3],\,\inbr{\epsilon,\,\epsilon}}}{\llang{z := x + y}}{\fbox{????}}\quad\trans{\fbox{????}}{\llang{write (z)}}{\fbox{?}}}
+      {\trans{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3],\,\inbr{\epsilon,\,\epsilon}}}{\llang{z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+which makes it possible to apply the rule <span class="math-tex" style="font-variant: small-caps">\(Assign\)</span>
+(we left the reader to confirm that <span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\ph}{{\phantom{x}}}
+  \sembr{\llang{x+y}}^\ph_\mathscr{E}\,[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3]=5\)</span>):
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trans{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3],\,\inbr{\epsilon,\,\epsilon}}}{\llang{z := x + y}}{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3,\,\llang{z}\mapsto 5],\,\inbr{\epsilon,\,\epsilon}}}\quad
+       \dots}
+      {\trans{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3],\,\inbr{\epsilon,\,\epsilon}}}{\llang{z := x + y; write (z)}}{\fbox{?}}}
+\)</span></p>
+
+This gives us the value for "<span class="math-tex">\(\fbox{????}\)</span>",
+which allows us to finally calculate "<span class="math-tex">\(\fbox{?}\)</span>"
+using the axiom <span class="math-tex" style="font-variant: small-caps">\(Write\)</span>:
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+    \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3,\,\llang{z}\mapsto 5],\,\inbr{\epsilon,\,\epsilon}}}{\llang{write (z)}}{\inbr{[\llang{x}\mapsto 2,\,\llang{y}\mapsto 3,\,\llang{z}\mapsto 5],\,\inbr{\epsilon,\,\inbr{5}}}}
+\)</span></p>
+
+Thus, taking into account <span class="math-tex">\((\star)\)</span> yet again, we have
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \sembr{\llang{read (x); read (y); z := x + y; write (z)}}^\ph_\mathscr{S}\,\inbr{2,\,3}=5
+\)</span></p>
+
+<p><img alt="" height="1580" name="image.png" src="https://ucarecdn.com/3c95ab52-11f8-4133-b6e3-ef4ce3786654/" width="1616" /></p>
+<p id="derivation-tree"  style="text-align:center">Derivation tree example</p>
+
+<p>We can see that big-step operational semantics allows us to perform program evaluation for concrete input: we just form an initial configuration for this input and then
+systematically apply rules of the semantics until (and if) we come to the result of the evaluation. The application of an axiom completes in one
+step (we can immediately evaluate the result configuration); the application of the rule for sequential composition amounts to splitting the composite
+statement into two, moving one floor up in the semantics's rule, and repeat. In the process a certain structure, called <em>derivation tree</em>, is
+maintained implicitly. The nodes of a derivation tree are <em>instances</em> of the semantics' rules, the edges connect premises with conclusions. The derivation
+tree for the example we just considered is depictured in <a href="#derivation-tree">Derivation tree</a> (the program's statements are omitted due to space considerations). Additionally
+to the derivation tree itself a configuration calculation flow is shown explicitly by dashed arrows. We can see, that for axioms these arrows come directly from
+left- to right-hand part of the rules, while the rule for composition threads configurations from right-hard part of one rule to the left-hand part of another.
+</p>
+<br>
+
+<p>
+Besides evaluation big-step operational semantics can also be used to <em>prove</em> the properties of the programs. For example, we can prove, that for
+arbitrary <span class="math-tex">\(n,\, m\in\mathbb{N}\)</span></p>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \newcommand{\ph}{{\phantom{x}}}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  \sembr{\llang{read (x); read (y); z := x + y; write (z)}}^\ph_\mathscr{S}\,\inbr{n,\,m}=n+m
+\)</span></p>
+
+<p>Indeed, we just need to repeat the construction of the derivation tree as we did in the evluation case, but this time instead of concrete numbers use
+their abstract denotations <span class="math-tex">\(n\)</span> and
+<span class="math-tex">\(m\)</span>; all steps could be performed as before until we arrive at the assignment rule. This time we would need to prove
+an additional lemma</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\llang{x + y}}^\ph_\mathscr{E}\,[\llang{x}\mapsto n,\,\llang{y}\mapsto m]=n+m
+\)</span></p>
+
+which, of course, can be easily done by unfolding corresponding rule for <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{E}\)</span>.
+
+<p>And, besides proving the properties of <em>concrete programs</em>, big-step operational semantics can be used to prove the properties
+of the semantics of the <em>language</em> as whole. We consider some examples in the next section.</p>
+
+<h2>Properties of the Semantics</h2>
+
+<p>Now we formulate some simple properties of the semantics for straight-line programs; as the language is rather simple, these
+properties and their proofs might look obvious. We nevertheless do this as a set of warming-up exersices to demonstrate
+relevant techniques before dealing with more advanced languages with less trivial properties.</p>
+
+<h3>Associativity of Composition</h3>
+
+First we consider rather an expected property of sequential composition to be <em>associative</em>.
+
+<h4>Lemma</h4> (Associativity of composition) For arbitrary <span class="math-tex">\(s_1,\,s_2,\,s_3\)</span>
+and arbitrary <span class="math-tex">\(c_1,\,c_2\)</span>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+    \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c_1}{\llang{s_1; (s_2; \,s_3)}}{c_2}\xLeftrightarrow{\phantom{XXX}}{}\trans{c_1}{\llang{(s_1; \,s_2); \,s_3}}{c_2}
+\)</span></p>
+
+
+In other words, the grouping of statements inside compositions is not essential, only their order.
+
+
+<h4>Proof</h4>
+Proving this claim amounts to
+proving it in both directions; we only do it from left to right since the opposite can be done similarly. So, we assume
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+    \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c_1}{\llang{s_1; (s_2; \,s_3}}{c_2}\ \ \ \ \ \ \ \ \ \ \ (\star)
+\)</span></p>
+
+<p>From this it is immediately follows that</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trans{c_1}{s_1}{c^\prime}\quad\trans{c^\prime}{\llang{s_2; \,s_3}}{c_2}}
+      {\trans{c_1}{\llang{s_1; (s_2; \,s_3)}}{c_2}}
+\)</span></p>
+
+because there is no way to complete the derivation tree for <span class="math-tex">\((\star)\)</span>
+other than by applying the rules of the semantics (this time, <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>).
+Similarly, we can apply the same rule for the second premise, which gives us
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+
+  \trule{\trans{c_1}{s_1}{c^\prime}\qquad\trule{\trans{c^\prime}{s_2}{c^{\prime\prime}}\quad\trans{c^{\prime\prime}}{s_3}{c_2}}{\trans{c^\prime}{\llang{s_2; \,s_3}}{c_2}}}
+      {\trans{c_1}{\llang{s_1; (s_2; \,s_3)}}{c_2}}
+\)</span></p>
+
+Thus, we may conclude, that
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \begin{array}{c}
+  \trans{c_1}{s_1}{c^\prime}\\
+  \trans{c^\prime}{s_2}{c^{\prime\prime}}\\
+  \trans{c^{\prime\prime}}{s_3}{c_2}
+\end{array}
+\)</span></p>
+
+for some configurations <span class="math-tex">\(c^\prime\)</span>
+and <span class="math-tex">\(c^{\prime\prime}\)</span>. Now we turn our attention to the following evaluation relation:
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c_1}{\llang{(s_1; \,s_2); \,s_3}}{?}
+\)</span></p>
+
+We have to prove that <span class="math-tex">\(\fbox{?}=c_2\)</span>;
+again, applying rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> twice we arrive at (a partial) derivation tree
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \trule{\trule{\trans{c_1}{s_1}{\fbox{???}}\quad\trans{\fbox{???}}{s_2}{\fbox{??}}}
+             {\trans{c_1}{\llang{s_1; \,s_2}}{\fbox{??}}}\qquad\trans{\fbox{??}}{s_3}{\fbox{?}}}
+      {\trans{c_1}{\llang{(s_1; \,s_2); \,s_3}}{\fbox{?}}}
+\)</span></p>
+
+By the determinism of the semantics we can conclude that <span class="math-tex">\(\fbox{???}=c^\prime\)</span>, from which (again, by determinism) immediately follows that
+<span class="math-tex">\(\fbox{??}=c^{\prime\prime}\)</span> and,
+finally, that <span class="math-tex">\(\fbox{?}=c_2\)</span>.
+
+<p>Note, we did not use anything besides the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>, thus
+the associativity of composition does not depend on other rules and will hold as long as the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>
+is kept in its current form.</p>
+
+<p>From what we've just proven it is immediately follows that for arbitrary <span class="math-tex">\(s_1,\,s_2,\,s_3\)</span></p>
+
+<p style="text-align:center"><span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\llang{s_1; (s_2; \,s_3)}}^\ph_\mathscr{S}=\sembr{\llang{(s_1; \,s_2); \,s_3}}^\ph_\mathscr{S}
+\)</span></p>
+
+In other words, regrouping the components of composition is an equivalent transformation.
+
+
+
+
+
+
+
+
+<h3>Finite Read and Write</h3>
+
+The next property we are going to establish is that every statement can read only a finite number of input
+stream elements; this number depends only on the statement itself, and for all initial configurations with an input stream
+shorter than that number the evaluation never comes to a final configuration. Formally, we prove the following lemma:
+
+<h4>Lemma</h4>(Finite read) For any statements there is a natural number n such that for every configuration <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  c=\inbr{\sigma,\,\inbr{i,\,o}}\)</span>
+
+<ol>
+  <li> if <span class="math-tex">\(|i| &lt n\)</span>
+then there is no configuration <span class="math-tex">\(c^\prime\)</span>
+such that <span class="math-tex">\(
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+      \trans{c}{s}{c^\prime}\)</span>;
+</li>
+<li> if <span class="math-tex">\(|i|\ge n\)</span>
+and there is some configuration <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+    c^\prime=\inbr{\sigma^\prime,\,\inbr{i^\prime,\,o^\prime}}\)</span>
+such that <span class="math-tex">\(
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+    \trans{c}{s}{c^\prime}\)</span>, then
+  <span class="math-tex">\(|i^\prime|=|i|-n\)</span>.
+</li>
+</ol>
+
+
+<h4>Proof</h4>
+<p>
+The proof goes by structural induction. For the base case we need to consider four simple statements and four corresponding semantics rules.
+By inspecting the rules <span class="math-tex" style="font-variant: small-caps">\(Skip\)</span>,
+<span class="math-tex" style="font-variant: small-caps">\(Assign\)</span>,
+and <span class="math-tex" style="font-variant: small-caps">\(Write\)</span> we can conclude that neither of them touches input stream. Thus,
+if an evaluation according to these rules succesfully completes, then input streams of initial and final configurations are equal. This means that for these
+three statements <span class="math-tex">\(n=0\)</span>.
+</p>
+
+<p>On the contrary, the rule <span class="math-tex" style="font-variant: small-caps">\(Read\)</span> takes one element from input stream and puts it into a state. In the final configuration input stream will be one
+element shorter, and this configuration can not be constructed if the initial one had empty input stream. Thus, in this case <span class="math-tex">\(n=1\)</span>.</p>
+
+<p>To complete the proof, we need to perform an induction step by inspecting the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>.
+Let us have a statement <span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+  s_1\llang{;}s_2\)</span>; by
+induction hypothesis we may conclude, that there are numbers <span class="math-tex">\(n_1\)</span> and
+<span class="math-tex">\(n_2\)</span>
+such the claim is true for <span class="math-tex">\(s_1\)</span> and
+<span class="math-tex">\(s_2\)</span>, respectively. Let first
+assume, that for some configuration <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  c=\inbr{\sigma,\,\inbr{i,\,o}} there is another one c^\prime=\inbr{\sigma^\prime,\,\inbr{i^\prime,\,o^\prime}}\)</span> such that
+</p>
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{s_1\llang{;}s_2}{c^\prime}
+\)</span></p>
+
+By unfolding the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> we have
+
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+
+  \trule{\trans{c}{s_1}{\inbr{\sigma^{\prime\prime},\,\inbr{i^{\prime\prime},\,o^{\prime\prime}}}}\quad\trans{\inbr{\sigma^{\prime\prime},\,\inbr{i^{\prime\prime},\,o^{\prime\prime}}}}{s_2}{c^\prime}}
+      {\trans{c}{s_1\llang{;}s_2}{c^\prime}}
+\)</span></p>
+
+From induction hypothesis for <span class="math-tex">\(s_1\)</span> we know,
+that <span class="math-tex">\(|i^{\prime\prime}|=|i|-n_1\)</span>;
+from induction hypothesis for <span class="math-tex">\(s_2\)</span> we know,
+that <span class="math-tex">\(|i^\prime|=|i^{\prime\prime}|-n_2\)</span>; thus, overall
+<span class="math-tex">\(|i^\prime|=|i|-n_1-n_2\)</span>,
+or <span class="math-tex">\(|i^\prime|=|i|-(n_1+n_2)\)</span>
+and <span class="math-tex">\(n=n_1+n_2\)</span>.
+
+Let us now assume that <span class="math-tex">\(|i|&lt;n_1+n_2\)</span>. If <span class="math-tex">\(|i|&lt;n_1\)</span>,
+then, by the induction hypothesis for <span class="math-tex">\(s_1\)</span>,
+there is no configuration <span class="math-tex">\(c^{\prime\prime}\)</span> such that
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+    \newcommand{\llang}[1]{\mathbf{#1}}
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{\inbr{\sigma,\,\inbr{i,\,o}}}{s_1}{c^{\prime\prime}}
+\)</span></p>
+
+If <span class="math-tex">\(n_1\le|i|&lt;n_1+n_2\)</span>
+and there is a configuration <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  c^{\prime\prime}=\inbr{\sigma^{\prime\prime},\,\inbr{i^{\prime\prime},\,o^{\prime\prime}}}\)</span> such that
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+    \newcommand{\llang}[1]{\mathbf{#1}}
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{\inbr{\sigma,\,\inbr{i,\,o}}}{s_1}{c^{\prime\prime}}
+\)</span></p>
+
+then <span class="math-tex">\(|i^{\prime\prime}|&lt;n_2\)</span> by induction hypothesis for <span class="math-tex">\(s_1\)</span>;
+by induction hypothesis for <span class="math-tex">\(s_2\)</span>
+there is no configuration <span class="math-tex">\(c^\prime\)</span> such that
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c^{\prime\prime}}{s_2}{c^\prime}
+\)</span></p>
+
+which completes the proof.
+
+A similar property can be established for output streams.
+
+<h4>Lemma</h4>(Finite write) Let <span class="math-tex">\(s\)</span> be a statement.
+Then there is a natural number <span class="math-tex">\(n\)</span> such that for each
+pairs of configurations <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  c=\inbr{\sigma,\,\inbr{i,\,o}} and c^\prime=\inbr{\sigma^\prime,\,\inbr{i^\prime,\,o^\prime}}
+  \)</span> if
+
+<p style="text-align:center"><span class="math-tex">\(
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+  \trans{c}{s}{c^\prime}
+\)</span></p>
+
+then <span class="math-tex">\(|o^\prime|=|o|+n\)</span>.
+
+<h4>Proof</h4>
+  Like in the previous lemma, the principle of structural induction gives us the blueprint for the proof.
+  In the base case, we consider four simple statements and corresponding semantics rules. For all cases, except for
+  <span class="math-tex" style="font-variant: small-caps">\(Write\)</span>,
+the output stream is left untouched, thus <span class="math-tex">\(n=0\)</span>.
+For <span class="math-tex" style="font-variant: small-caps">\(Write\)</span>, if the statement
+  managed to succeed, the output stream in the final configuration is one element longer, than in the initial
+  one, thus <span class="math-tex">\(n=1\)</span>.
+
+  In the induction step case, we have a statement <span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+  s_1\llang{;}s_2
+  \)</span>
+and we assume that lemma holds for <span class="math-tex">\(s_1 and s_2\)</span>; this
+  gives us the numbers <span class="math-tex">\(n_1 and n_2\)</span>. Next we assume that
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+    \newcommand{\llang}[1]{\mathbf{#1}}
+
+    \trans{c}{s_1\llang{;}s_2}{c^\prime}
+\)</span></p>
+
+  and unfold the rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span>:
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+    \newcommand{\llang}[1]{\mathbf{#1}}
+
+    \trule{\trans{c}{s_1}{\inbr{\sigma^{\prime\prime},\,\inbr{i^{\prime\prime},\,o^{\prime\prime}}}}\quad\trans{\inbr{\sigma^{\prime\prime},\,\inbr{i^{\prime\prime},\,o^{\prime\prime}}}}{s_2}{c^\prime}}
+        {\trans{c}{s_1\llang{;}s_2}{c^\prime}}
+\)</span></p>
+
+
+  By induction hypothesis for <span class="math-tex">\(s_1\)</span>
+we know that <span class="math-tex">\(|o^{\prime\prime}|=|o|+n_1\)</span>;
+by induction hypothesis for <span class="math-tex">\(s_2 — that |o^\prime|=|o^{\prime\prime}|+n_2\)</span>.
+Thus, <span class="math-tex">\(|o^\prime|=|o|+(n_1+n_2)\)</span>, from
+  which we conclude <span class="math-tex">\(n=n_1+n_2\)</span>.
+
+We can see the similarity between these two proofs; to tell the truth this is the case for all claims that can be proven by structural induction. Thus, almost every time
+when we encounter such a claim we will skip the proof.
+
+From these two lemmas we can derive the following corollaries:
+
+<ol>
+<li> For arbitrary <span class="math-tex">\(s\in\mathscr{S}\)</span>,<span class="math-tex">\(\,i,\,i^\prime\in\mathbb{Z}^*\)</span>
+if both <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{s}^\ph_\mathscr{S}\,i\)</span>
+and <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{s}^\ph_\mathscr{S}\,i^\prime\)</span> defined, then
+
+<p style="text-align:center"><span class="math-tex">\(
+    \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+    |\sembr{s}^\ph_\mathscr{S}\,i|=|\sembr{s}^\ph_\mathscr{S}\,i^\prime|
+  \)</span></p>
+
+  In other words, the length of the result depends only on the statement, not input data.
+
+</li>
+<li>
+  Let <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{s}^\ph_\mathscr{S}\,i\)</span>
+is defined for some <span class="math-tex">\(s\in\mathscr{S}\)</span>
+and <span class="math-tex">\(i\in\mathbb{Z}^*\)</span>.
+Then for arbitrary <span class="math-tex">\(i^\prime\in\mathbb{Z}^*\)</span>
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+    \sembr{s}^\ph_\mathscr{S}\,ii^\prime=\sembr{s}^\ph_\mathscr{S}\,i
+\)</span></p>
+
+   In other words, if a program has returned some result for some input, it will also return the same result
+   if we arbitrarily extend this input. The proof uses the determinism property of the semantics.
+</li>
+</ol>
+
+<h3>Variable Renaming</h3>
+
+The last example of a semantic property we are going to consider is <em>equivalence up to variable renaming</em>.
+
+By observing the semantics of expressions and statements we may notice that to some extent all variables
+are indistinguishable: no rule requires any <em>specific</em> variable to be used, any variable can be potentially used
+anywhere. Thus, if we, for example, have an assignment
+
+<pre><code>a := <span class="math-tex">\(E\)</span></code></pre>
+
+we can rename "<code>a</code>" in, say, "<code>b</code>", and nothing changes as long as we simultaneously
+rename all following occurrences of "<code>a</code>" to "<code>b</code>" as well. We have, however, to be
+careful to avoid  <em>coalescing</em> different variables into one; for example, if "<code>b</code>" already
+used in the same program, the result of renaming may or may not be correct depending on the properties
+of this concrete program. Thus, we should only consider <em>one-to-one</em> variable renamings.
+
+More formally, we call a function
+
+<p style="text-align:center"><span class="math-tex">\(
+  \theta : \mathscr{X}\to\mathscr{X}
+\)</span></p>
+
+a <em>renaming</em> iff the following two conditions hold:
+
+<ol>
+<li><span class="math-tex">\(\theta\)</span> is total
+(defined for each <span class="math-tex">\(x\in\mathscr{X}\)</span>);</li>
+<li>for each <span class="math-tex">\(y\in\mathscr{X}\)</span>
+there is a unique <span class="math-tex">\(x\in\mathscr{X}\)</span>
+such that <span class="math-tex">\(\theta\,(x)=y\)</span>.</li>
+</ol>
+
+This is in fact a mathematical definition of a <em>bijective</em>
+mapping from <span class="math-tex">\(\mathscr{X}\)</span>
+to <span class="math-tex">\(\mathscr{X}\)</span>.
+It is immediately follows from the definition that the inverse mapping <span class="math-tex">\(\theta^{-1}\)</span> exists, which is
+also a bijection. Moreover, both compositions <span class="math-tex">\(\theta\theta^{-1}\)</span>
+and <span class="math-tex">\(\theta^{-1}\theta\)</span> are identity
+functions.
+
+We now define what is a result of application of a renaming <span class="math-tex">\(\theta\)</span>
+to an expression <span class="math-tex">\(e\)</span>
+(notation: <span class="math-tex">\(e\,\theta\)</span>):
+
+<p style="text-align:center"><span class="math-tex">\(
+  \begin{array}{rclcl}
+  x\,\theta&=&\theta\,(x)&,&x\in\mathscr{X}\\
+  n\,\theta&=&n&,&n\in\mathbb{N}\\
+  (l\oplus r)\,\theta&=&(l\,\theta)\oplus(r\,\theta)&
+\end{array}
+\)</span></p>
+
+In a nutshell, <span class="math-tex">\(e\,\theta\)</span> is an expression
+in which all variables are substituted to their images according to <span class="math-tex">\(\theta\)</span>.
+Similarly, we can extend the application of renaming to statements:
+
+<p style="text-align:center"><span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+  \begin{array}{rcl}
+
+  \llang{skip}\,\theta&=&\llang{skip}\\
+  (x\llang{:=}e)\,\theta&=&(\theta\,(x))\llang{:=}(e\,\theta)\\
+  (\llang{read (x)})\,\theta&=&\llang{read (\theta\,(x))}\\
+  (\llang{write (e)})\,\theta&=&\llang{write (e\,\theta)}\\
+  (s_1\llang{;}s_2)\,\theta&=&(s_1\,\theta)\llang{;}(s_2\;\theta)
+\end{array}
+\)</span></p>
+
+<h4>Lemma</h4>
+Let <span class="math-tex">\(s\)</span> be a statement
+and <span class="math-tex">\(\theta\)</span> be a renaming. Then
+
+<p style="text-align:center">  <span class="math-tex">\(
+    s\equiv s\,\theta
+\)</span></p>
+
+
+<h4>Proof</h4>
+  First, we recollect that
+
+<p style="text-align:center">  <span class="math-tex">\(
+    s\equiv s\,\theta
+\)</span></p>
+
+  means precisely
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+
+    \sembr{s}^\ph_\mathscr{S}=\sembr{s\,\theta}^\ph_\mathscr{S}
+\)</span></p>
+
+  Since <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{S}\)</span> is defined
+in terms of evaluation relation "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>" we need to prove
+  a similar claim for "<span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>".
+This claim on the first glance may look like the follows: for all <span class="math-tex">\(c,\,c^\prime\in\mathscr{C}\)</span>
+
+<p style="text-align:center">  <span class="math-tex">\(
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \trans{c}{s}{c^\prime}\xLeftrightarrow{\phantom{XXX}}{}\trans{c}{s\,\theta}{c^\prime}
+\)</span></p>
+
+  Alas, this does not hold in general case: let us have a statement <span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+  \llang{write (x)}\)</span> and let
+  <span class="math-tex">\(\theta\,(x)=y\)</span>.
+Then for a configuration <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  c=\inbr{[x\mapsto 3],\,\inbr{i,\,o}}\)</span>
+there is no <span class="math-tex">\(c^\prime\)</span>
+  such that
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+    \trans{c}{\llang{write (y)}}{c^\prime}
+\)</span></p>
+
+  since <span class="math-tex">\(y\)</span>
+is undefined in <span class="math-tex">\([x\mapsto 3]\)</span>. The problem here is that renamed statements only behave similarly to the original ones
+  in <em>renamed</em> states.
+
+  The fixed claim looks like the follows: let <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  c=\inbr{\sigma,\,w}\)</span>
+and <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+
+  c^\prime=\inbr{\sigma^\prime,\,w^\prime}\)</span> then
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+    \trans{c}{s}{c^\prime}\xLeftrightarrow{\phantom{XXX}}{}\trans{\inbr{\sigma\circ\theta^{-1},\,w}}{s\,\theta}{\inbr{\sigma^\prime\circ\theta^{-1},\,w^\prime}}\ \ \ \ \ \ \ \ \ \ \ (\clubsuit)
+\)</span></p>
+
+<p>
+  Informally speaking here we "repair" states for renamed statements by first applying the <em>inverse</em>
+renaming <span class="math-tex">\(\theta^{-1}\)</span>
+which exists by bijectivity of <span class="math-tex">\(\theta\)</span>. To
+  prove this we need additional claim.</p>
+
+<h4>Claim</h4>
+  (<span class="math-tex">\(\spadesuit\)</span>)
+    Let <span class="math-tex">\(e\)</span> be an expression,
+<span class="math-tex">\(\sigma\)</span> be a state,
+and <span class="math-tex">\(n\)</span> be an integer number. Then
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      \sembr{e}^\ph_\mathscr{E}\,\sigma=n \xLeftrightarrow{\phantom{XXX}}{}\sembr{e\,\theta}^\ph_\mathscr{E}\,(\sigma\circ\theta^{-1})=n
+\)</span></p>
+  <h4>Proof</h4>
+    One may expect that the proof has to be performed in two directions. However, by the bijectivity of <span class="math-tex">\(\theta\)</span>
+
+<p style="text-align:center">    <span class="math-tex">\(
+      \begin{array}{rcl}
+      \theta&=&(\theta^{-1})^{-1}\\
+      (e\,\theta)\,\theta^{-1}&=&e\\
+      \sigma&=&(\sigma\circ\theta^{-1})\circ\theta
+    \end{array}
+\)</span></p>
+
+    Thus, if we prove the claim from left to right, then (by arbitrariness of <span class="math-tex">\(e\)</span>,
+<span class="math-tex">\(\sigma\)</span>,
+and <span class="math-tex">\(\theta\)</span>) we can
+    assume
+
+<p style="text-align:center">    <span class="math-tex">\(
+      \begin{array}{rcl}
+      e&=&e\,\theta\\
+      \sigma&=&\sigma\circ\theta^{-1}
+    \end{array}
+\)</span></p>
+
+    and the right-to-left direction will follow from left-to-right immediately.
+
+    The proof proceeds by structural induction.
+
+    The base case is a constant or a variable. Since the semantics of constants does not depend on a state the
+    claim for constant case follows vacuously. If <span class="math-tex">\(e\)</span> is
+a variable <span class="math-tex">\(x\)</span>, then:
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      \begin{array}{rcl}
+      \sembr{x\,\theta}^\ph_\mathscr{E}\,(\sigma\circ\theta^{-1})&=&(by\ the\ definition\ of\ \sembr{\bullet}^\ph_\mathscr{E}\\
+      (\sigma\circ\theta^{-1})\,(x\,\theta)&=&(by\ the\ definition\ of\ renaming\ application)\\
+      (\sigma\circ\theta^{-1})\,(\theta\,(x))&=&(by\ the\ definition\ of\ function\ composition)\\
+      ((\sigma\circ\theta^{-1})\circ\theta)\,(x)&=&(by\ the\ associativity\ of\ function\ composition)\\
+      (\sigma\circ(\theta^{-1}\circ\theta))\,(x)&=&(by\ the\ definition\ of\ function\ inversion)\\
+      \sigma\,(x)&=&(by\ the\ condition\ of\ the\ claim)\\
+      n&&
+    \end{array}
+\)</span></p>
+
+    The induction step assumes that the claim holds for some expressions <span class="math-tex">\(l\)</span>
+and <span class="math-tex">\(r\)</span>; we need to prove that it also holds for
+    <span class="math-tex">\(l\oplus r\)</span>:
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      \begin{array}{rcl}
+      \sembr{(l\oplus r)\,\theta}\,(\sigma\circ\theta^{-1})&=&(by\ the\ definition\ of\ renaming\ application)\\
+      \sembr{(l\,\theta)\oplus(r\,\theta)}\,(\sigma\circ\theta^{-1})&=&(by\ the\ definition\ of \sembr{\bullet}^\ph_\mathscr{E})\\
+      \sembr{l\,\theta}\,(\sigma\circ\theta^{-1})\otimes\sembr{r\,\theta}\,(\sigma\circ\theta^{-1})&=&(by\ inductive\ hypotheses\\
+      \sembr{l}\,\sigma\otimes\sembr{r}\,\sigma&=&(by\ the\ condition\ of\ the\ claim)\\
+      n&&
+    \end{array}
+\)</span></p>
+
+    This completes the proof.
+  The proof of <span class="math-tex">\((\clubsuit)\)</span> goes by structural induction as well.
+Similarly to the claim <span class="math-tex">\((\spadesuit)\)</span> we only need to prove it in
+  one direction (let it be left-to-right).
+
+  In the base case we have to consider four types of simple statements:
+
+  <ol>
+  <li>As <span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+    \llang{skip}
+    \)</span> does not change a configuration the lemma holds vacuously.</li>
+  <li>Let us have an assignment <span class="math-tex">\(
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+    x\llang{:=}e\)</span>. First, by the definition of renaming application<
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\llang}[1]{\mathbf{#1}}
+
+      (x\llang{:=}e)\,\theta=(\theta\,(x))\llang{:=}(e\,\theta)
+\)</span></p>
+
+    Then, by the definition of "<span class="math-tex">\(
+
+        \def\padding{\phantom{X}}
+    \def\transarrow{\xrightarrow}
+    \newcommand{\setpadding}[1]{\def\padding{#1}}
+    \def\subarrow{}
+    \newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+    \newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+  \newcommand{\transrel}{\setpadding{}\trans{}{}{}}
+  \transrel\)</span>":
+
+<p style="text-align:center">    <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\ph}{{\phantom{x}}}
+\newcommand{\llang}[1]{\mathbf{#1}}
+  \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+      \trans{\inbr{\sigma\circ\theta^{-1},\,w}}{(\theta\,(x))\llang{:=}(e\,\theta)}{\inbr{(\sigma\circ\theta^{-1})[\theta\,(x)\gets\sembr{e\,\theta}^\ph_\mathscr{E}\,(\sigma\circ\theta^{-1})],\,w}}
+\)</span></p>
+
+    By <span class="math-tex">\((\spadesuit)\)</span> we know that
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      \sembr{e\,\theta}^\ph_\mathscr{E}\,(\sigma\circ\theta^{-1})=\sembr{e}^\ph_\mathscr{E}\,\sigma
+\)</span></p>
+
+    By the definition of substitution in a state
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      (\sigma\circ\theta^{-1})[\theta\,(x)\gets\sembr{e}^\ph_\mathscr{E}\,\sigma]\,y=\left\{\begin{array}{rcl}
+                                                                                         \sembr{e}^\ph_\mathscr{E}\,\sigma&,&y=\theta\,(x)\\
+                                                                                         (\sigma\circ\theta^{-1})\,y&,&y\ne\theta\,(x)
+                                                                                       \end{array}\right.
+\)</span></p>
+
+    By the properties of functional inversion and composition and, again, using the definition of substitution in a state we have
+
+<p style="text-align:center">    <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+      \left\{\begin{array}{rcl}
+                                                                                         \sembr{e}^\ph_\mathscr{E}\,\sigma&,&y=\theta\,(x)\\
+                                                                                         (\sigma\circ\theta^{-1})\,y&,&y\ne\theta\,(x)
+                                                                                       \end{array}\right.=
+   \left\{\begin{array}{rcl}
+   \sembr{e}^\ph_\mathscr{E}\,\sigma&,&\theta^{-1}\,(y)=x\\
+   (\sigma\,(\theta^{-1}\,(y))&,&\theta^{-1}\,(y)\ne x
+    \end{array}\right.=(\sigma[x\gets\sembr{e}^\ph_\mathscr{E}])\,(\theta^{-1}\,(y))
+\)</span></p>
+
+    Thus, <span class="math-tex">\(
+  \newcommand{\ph}{{\phantom{x}}}
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+
+  \sigma^\prime=\sigma[x\gets\sembr{e}^\ph_\mathscr{E}]\circ\theta^{-1}\)</span> which completes the proof for the assignment case.</li>
+
+  <li>Two remaining cases can be proven similarly using the observation that worlds are invariant under renaming.</li>
+
+  </ol>
+
+  Finally, to prove the induction step we assume that <span class="math-tex">\((\clubsuit)\)</span>
+holds for statements <span class="math-tex">\(s_1\)</span>
+and <span class="math-tex">\(s_2\)</span> and we need
+  to prove
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+    \trans{\inbr{\sigma\circ\theta^{-1},\,w}}{s_1\llang{;}s_2}{\inbr{\sigma^\prime\circ\theta^{-1},\,w^\prime}}
+\)</span></p>
+
+  From the condition of the lemma we know
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+  \newcommand{\llang}[1]{\mathbf{#1}}
+
+
+    \trule{\trans{\inbr{\sigma,\,w}}{s_1}{\inbr{\sigma^{\prime\prime},\,w^{\prime\prime}}}\quad\trans{\inbr{\sigma^{\prime\prime},\,w^{\prime\prime}}}{s_2}{\inbr{\sigma^\prime,\,w^\prime}}}
+        {\trans{\inbr{\sigma,\,w}}{s_1\llang{;}s_2}{\inbr{\sigma^\prime,\,w^\prime}}}
+\)</span></p>
+
+  for some <span class="math-tex">\(\sigma^{\prime\prime}\)</span> and
+<span class="math-tex">\(w^{\prime\prime}\)</span>.
+Applying the induction hypotheses to the premises and then applying rule <span class="math-tex" style="font-variant: small-caps">\(Seq\)</span> we acquire the following
+  derivation
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+\newcommand{\llang}[1]{\mathbf{#1}}
+
+\def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+\newcommand{\setarrow}[1]{\def\transarrow{#1}}
+\newcommand{\trule}[2]{\dfrac{#1}{#2}}
+
+    \trule{\trans{\inbr{\sigma\circ\theta^{-1},\,w}}{s_1}{\inbr{\sigma^{\prime\prime}\circ\theta^{-1},\,w^{\prime\prime}}}\quad\trans{\inbr{\sigma^{\prime\prime}\circ\theta^{-1},\,w^{\prime\prime}}}{s_2}{\inbr{\sigma^\prime\circ\theta^{-1},\,w^\prime}}}
+        {\trans{\inbr{\sigma\circ\theta^{-1},\,w}}{s_1\llang{;}s_2}{\inbr{\sigma^\prime\circ\theta^{-1},\,w^\prime}}}
+\)</span></p>
+
+  which proves the induction step.
+
+  Now, assume
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  \newcommand{\llang}[1]{\mathbf{#1}}
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+    \trans{\inbr{\Lambda,\,\inbr{i,\,\epsilon}}}{s}{\inbr{\sigma,\,w}}
+\)</span></p>
+
+  By <span class="math-tex">\((\clubsuit)\)</span> we have
+
+<p style="text-align:center">  <span class="math-tex">\(
+\newcommand{\inbr}[1]{\left<{#1}\right>}
+  \newcommand{\llang}[1]{\mathbf{#1}}
+      \def\padding{\phantom{X}}
+\def\transarrow{\xrightarrow}
+\newcommand{\setpadding}[1]{\def\padding{#1}}
+\def\subarrow{}
+\newcommand{\setsubarrow}[1]{\def\subarrow{#1}}
+\newcommand{\trans}[3]{{#1}\transarrow{\padding{\textstyle #2}\padding}\subarrow{#3}}
+
+    \trans{\inbr{\Lambda\circ\theta^{-1},\,\inbr{i,\,\epsilon}}}{s\,\theta}{\inbr{\sigma\circ\theta^{-1},\,w}}
+\)</span></p>
+
+  But <span class="math-tex">\(\Lambda\circ\theta^{-1}=\Lambda\)</span>, which completes the proof since now we have
+
+<p style="text-align:center">  <span class="math-tex">\(
+  \newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+    \sembr{s}^\ph_\mathscr{E}\,i=\sembr{s\,\theta}^\ph_\mathscr{E}\,i
+\)</span></p>
+
+  for arbitrary <span class="math-tex">\(i\)</span>
+by the definition of <span class="math-tex">\(
+\newcommand{\sembr}[1]{\llbracket{#1}\rrbracket}
+  \newcommand{\ph}{{\phantom{x}}}
+  \sembr{\bullet}^\ph_\mathscr{E}\)</span>.
+
+<!--First, we define the set of all <em>free variables</em>-->
+<!--<span class="math-tex">\(-->
+<!--\newcommand{\fv}[1]{\mathcal{FV}\,(#1)}-->
+<!--  \fv{}\)</span> in expression or statement:-->
+
+<!--<p style="text-align:center"><span class="math-tex">\(-->
+<!--\newcommand{\fv}[1]{\mathcal{FV}\,(#1)}-->
+
+<!--  \begin{array}{rclcl}-->
+<!--  \fv{x} &=& \{x\}&,& x\in\mathscr{X}\\-->
+<!--  \fv{z} &=&\emptyset &,&z\in\mathbb{N}\\-->
+<!--  \fv{l\oplus r} &=& \fv{l}\cup\fv{r}&&-->
+<!--\end{array}-->
+<!--\)</span></p>-->
+
+<!--<p style="text-align:center"><span class="math-tex">\(-->
+<!--  \newcommand{\llang}[1]{\mathbf{#1}}-->
+<!--\newcommand{\fv}[1]{\mathcal{FV}\,(#1)}-->
+
+<!--  \begin{array}{rcl}-->
+<!--  \fv{\llang{skip}}&=&\emptyset\\-->
+<!--  \fv{x\,\llang{:=}\,e}&=&\{x\}\cup\fv{e}\\-->
+<!--  \fv{\llang{read (x)}}&=&\{x\}\\-->
+<!--  \fv{\llang{write (e)}}&=&\fv{e}\\-->
+<!--  \fv{s_1\llang{;}s_2}&=&\fv{s_1}\cup\fv{s_2}xs-->
+<!--\end{array}-->
+<!--\)</span></p>-->

@@ -1,0 +1,328 @@
+
+Syntactically, our language incorporates two syntactic categories: expressions and statements. We start from describing
+so-called abstract syntax
+for the expression category. We consider a countable set of variables
+
+  \mathscr{X}=\{x_1,\,x_2,\,\dots\}
+
+
+and a set of binary operators
+
+  \otimes= \{+,\, -,\, \times,\, /,\, \%,\, <,\, \le,\, >,\, \ge,\, =,\,\ne,\, \vee,\, \wedge\}
+
+
+which contains all thirteen built-in &lambda;aMa operators. Then, the category of expressions \mathscr{E} can be defined by
+the following recursive scheme:
+
+  \begin{array}{rcl}
+  \mathscr{E} & = & \mathscr{X} \\
+              &   & \mathbb{N} \\
+              &   & \mathscr{E}\otimes\mathscr{E}
+\end{array}
+
+
+
+This scheme defines a countable set of labeled ordered trees of finite height: each node of such a tree is labeled, and for any node the order
+of its immediate subtrees is essential. The simplest trees of this form are just leaves labeled with either variables or natural numbers; we simply
+write \mathscr{X}
+or \mathbb{N}
+in the first two lines of definition of \mathscr{E}, but actually we mean tree nodes labeled by the symbols of
+these sets. As for the third line, it stipulates that for arbitrary two expressions e_1,\,e_2\in\mathscr{E} a tree with a root labeled with any symbol
+from \otimes
+and immediate subtress e_1
+and e_2 is also expression.
+
+
+<img alt="Abstract Syntax for Expressions" height="620" name="image.png" src="https://ucarecdn.com/dddf55a7-8bf1-443a-8e1b-ca5da032ee1f/" width="1272" />
+Abstract Syntax for Expressions
+
+We call this definition abstract syntax because it describes nothing more than a subordination between elementary constructs. In order to represent
+expressions in some medium, however, we need concrete syntax; it is easy to anticipate that there can be multiple concrete syntaxes for given
+abstract one. In figure below (Various Concrete Syntaxes for Expression Language) we give some examples of those for expressions: the first (a) consists of graphical elements such as
+circles, lines, texts, etc. Another one (b)
+is the familiar infix notation which includes numbers, letters, binary
+operators and brackets. Yet another (but by no means the last one) is reverse Polish notation
+(c), in which binary operators are
+put after the operands they connect. In what follows we will stick with infix notation.
+
+<img alt="Various Concrete Syntaxes for Expression Language" height="464" name="image.png" src="https://ucarecdn.com/ef48f37d-88e4-4a80-851b-c1353ab7daf8/" width="888" />
+Various Concrete Syntaxes for Expression Language
+
+Now we need to define the semantic domain for the semantics of expressions. We already hinted that this domain should be shaped like a set of some
+data processing functions \mathfrak{D}\to\mathfrak{D}; however, we need to be more specific.
+
+As we deal with arithmetic expressions it is rather natural to expect that the results of their evaluation are interger values, i.e.
+\mathbb{Z} (as we agreedearlier, we assume \mathbb{Z}\subset\mathfrak{D}); on the other hand, the value of an expression depends on the values of variables it contains. We can
+encode these values as a state — a function which maps variables to integer values:
+
+  St : \mathscr{X} \to \mathbb{Z}
+
+
+There is nothing wrong with assuming St\subset\mathfrak{D}: as any expression can contain only a finite number of variables we are interested only in
+states with finite domains which can be encoded, for example, as finite lists of pairs. Thus, finally, we have the following "type" for the semantics
+of expressions:
+
+
+  \sembr{\bullet}^\ph_\mathscr{E}:\mathscr{E}\to(St\to\mathbb{Z})
+
+
+
+
+
+
+
+<h2>Denotational Semantics</h2>
+
+There are multiple ways to give the semantics for a language formally. Here we use so-called denotational way in which it is immediately
+specified what object from the semantic domain corresponds to a given language construct. For this concrete language denotational semantics
+looks simple and natural; however, for more advanced languages more advanced mathematical apparatus would be required. It is also worth mentioning that,
+as a rule, denotational semantics gives us a very abstract, high-level view on the behavior of programs, which may or may not be desirable from a
+practical standpoint.
+
+
+The denotational semantics for expressions is shown in figure below ().
+
+  \sembr{z}^\ph_\mathscr{E} = \sigma \mapsto z \\
+  \sembr{x}^\ph_\mathscr{E} = \sigma \mapsto \sigma\,x \\
+  \sembr{e_1\otimes e_2}^\ph_\mathscr{E} = \sigma \mapsto \sembr{e_2}^\ph_\mathscr{E}\,\sigma\oplus\sembr{e_2}^\ph_\mathscr{E}\,\sigma
+
+Denotational Semantics of Simple Expressions
+
+
+
+We give here three equations, one for each syntactic form. In the right-hand side of each equation we immediately
+give the object (a function from states to integers) which corresponds to the semantics of the expression in the
+left-hand side. The notation \star \mapsto \bullet
+is used to denote a function from \star
+to \bullet; we refrain from
+using the lambda notation since these functions are elements of the meta-language (the language we use to describe the
+semantics), not of the object one (the language which semantics is being described).
+
+In the first equation, when the expression is a natural number z, its semantics is a constant function, which for
+any state \sigma
+return just this number z.
+
+When the expression in question is a variable x
+, its semantics is a function which, given a state \sigma, returns
+the value this state assigns to this variable.
+
+Finally, when the expression is a binary operator with two subexpressions e_1
+and e_2,
+its semantics is a function which, given a state \sigma,
+first calcalates the values of subexpressions e_1
+and e_2 in the same state, and then combines them using a certain arithmetic operator
+\oplus.
+The correspondence between \otimes and
+\oplus is described by the following table:
+
+  ⊗ :       ⊕ in λaMa
+  + :       +
+  - :       -
+  × :  *
+  / :       /
+  % :      %
+  < :       <
+  > :       >
+  ≤ :     <=
+  ≥ :     >=
+  = :       =
+  ≠ :     !=
+  ∧ :  &&
+  ∨ :   !!
+
+Here we use built-in &lambda;aMa binary operators to specify the semantics of \oplus; this approach is good enough for now since our primary objective is
+to implement a reference interpreter in &lambda;aMa. Later, when we will deal with <tt>x86</tt> codegenerator we will refine the understanding of
+these operators' semantics.
+
+Note, while the symbols in the first and second columns look similar, they actually have different nature: the left ones are
+elements of syntax while the right ones — conventional denotations for familiar arithmetic operators.
+The last equation in <a href="#se-denot">Denotational Semantics of Expressions</a>, thus, is actually a generic one which denotes thirteen concrete equations in which \otimes
+and \oplus are
+substituted coherently according to the table given above.
+
+We can make two important observations.
+
+First, in given semantics there is a single rule for any "kind" of expression (variable, constant, binary operation), and for each rule its right part defines
+semantic function unambiguously. Thus, for each expression e
+and each state \sigma there is at most one
+integer number y such that
+
+
+  \sembr{e}^\ph_\mathscr{E}\,\sigma=x
+
+
+
+This to some extent justifies our desire for
+  \sembr{e}^\ph_\mathscr{E}
+
+to be a function from states to integers. Indeed, the
+property we just established is functionality. On the other hand, in the domain of semantics the same property has
+another name: determinism. Thus, the semantics in question is deterministic, meaning that evaluating any expression in a given state
+delivers at most one value. Non-deterministic semantics, according to which there can be multiple such values, seemingly are not
+compatible with our framework of semantic functions; nevertheless, such semantics exist, and there are ways to fix this incompatibility.
+Further we will deal only with deterministic semantics.
+
+Another important property is compositionality: the semantics of a construct is expressed in the terms of the semantics
+of its proper subconstructs. Indeed, the first two equations are axioms, meaning, that no expressions containing semantic
+brackets "
+
+  \sembr{\bullet}^\ph_\mathscr{E}
+" occur in the right-hand side; the third equation is not an axiom, but semantic
+backets are applied only to proper subconstructs (e_1
+and e_2)
+of the construct in question (e). Compositionality is
+a distinctive property of denotational semantics; using other semantic description styles may or may not result in compositional
+semantic specification.
+
+When a semantic is compositional, a certain proof principle — structural induction — can be used to establish
+its properties. This technique is essentially a specific kind of mathematical induction applied to finite trees rather than to
+natural numbers. To prove by structural induction that some property holds for all trees one needs to prove, first, that this
+property holds for all leaves (base of induction); then, assuming that the property holds for all trees up to a certain
+height (induction hypothesis) one needs to prove that the property holds for all trees one level higher. We demonstrate
+the application of this principle by the following example.
+
+
+
+<h2>Strictness</h2>
+
+We are going to prove the strictness property of given semantics. It informally means that in order to calculate the
+value for the whole expression one needs to calculate the values for all its subexpressions. First, we define the
+following relation "\preceq" of one expression being a subexpression of another:
+
+  \begin{array}{c}
+  e^\prime \preceq e^\prime\otimes e \\
+  e^\prime \preceq e\otimes e^\prime \\
+  e\preceq e \\
+  e^\prime\preceq e^{\prime\prime} \wedge e^{\prime\prime}\preceq e \Rightarrow e^\prime\preceq e
+\end{array}
+
+
+The first two lines define the immediate
+subexpression relation while the last two — its reflexive-transitive
+closure. For example, for the expression (x+2)*y
+all its subexpression are (x+2)*y,
+x+2,
+y,
+x,
+and 2.
+
+<!--\begin{lemma}[Strictness]-->
+<blockquote>
+  For all e, \sigma \ and\  x if
+
+
+
+    \sembr{e}^\ph_\mathscr{E}\,\sigma=x
+
+
+  then for all e^\prime\preceq e
+there exists x^\prime such that
+
+
+
+    \sembr{e^\prime}^\ph_\mathscr{E}\,\sigma=x^\prime
+
+</blockquote>
+<!--\end{lemma}-->
+
+<!--\begin{proof}-->
+<h4>Proof:</h4>
+  For base case (variable and constant) the lemma holds vacuously since in both cases
+  the only possible subexpressions are these expressions themselves.
+
+  Assume the lemma holds for e_1 and
+e_2; we need to prove it holds for
+ e_1\otimes e_2.
+  By the definition of "\preceq"
+for any e^\prime\preceq e_1\otimes e_2 one of the
+  following is true:
+
+  <ol>
+  -e^\prime=e_1, or
+  -e^\prime=e_2, or
+  -e^\prime\preceq e_1, or
+  -e^\prime\preceq e_1.
+  </ol>
+
+
+  By the condition of lemma we have
+
+  \sembr{e_1\otimes e_2}^\ph_\mathscr{E}\,\sigma=x.
+
+
+  By the definition of
+  \sembr{\bullet}^\ph_\mathscr{E}
+we have
+  \sembr{e_1}^\ph_\mathscr{E}\,\sigma\oplus\sembr{e_2}^\ph_\mathscr{E}\,\sigma=x.
+
+By the definition of \oplus
+there exist x_1
+and x_2 such that
+
+
+
+  \begin{array}{rcl}
+    \sembr{e_1}^\ph_\mathscr{E}\,\sigma&=&x_1\\
+    \sembr{e_2}^\ph_\mathscr{E}\,\sigma&=&x_2
+  \end{array}
+
+
+  If e^\prime=e_1 or
+e^\prime=e_2 then the lemma follows immediately.
+  If e^\prime\preceq e_1
+(or e^\prime\preceq e_2) the induction hypothesis can be applied as we just have proven that
+  both e_1 and
+e_2
+have some values being evaluated in the state \sigma.
+<!--\end{proof}-->
+
+The strictness property, in particular, means that if variable x
+is undefined in some state \sigma, then
+any expression e,
+containing x, is also undefined in
+\sigma. Indeed, if
+x occurs in
+e, then, naturally,
+x\preceq e.
+If \sigma\,x
+undefined but
+
+  \sembr{e}^\ph_\mathscr{E}\,\sigma not, this would contradict
+the lemma we've just proven.
+
+
+Now we can give precise answers to the questions asked in section Semantics.
+The first question was if the expression 0*(x/0) evaluates to zero or undefined. Due to the strictness of our semantics it is undefined in
+any state. Indeed
+
+  x/0 \preceq 0*(x/0)
+
+and
+  \sembr{x/0}^\ph_\mathscr{E}\,\sigma
+   is
+undefined for any state \sigma
+since either \sigma\,x is undefined or
+\sigma\,x
+is defined but \sigma\,x / 0 is
+undefined due to the division by zero.
+
+
+The second question was if 1+x-x
+is equivalent to 1. Again, by the strictness and the fact that x \preceq 1+x-x we immediately have that for the empty state
+\Lambda,
+undefined for every variable x,
+
+  \sembr{1}^\ph_\mathscr{E}\,\Lambda=1
+  \sembr{1+x-x}^\ph_\mathscr{E}\,\Lambda
+is undefined.
+Thus, these two expressions are not equivalent.
+
+
+We stress that these answers are specific to the concrete semantics of expressions we described; for different semantics the answers can be different.
+
+
+<!--Conclusion-->
+In conclusion, the text describes the abstract syntax for expressions and the countable set of labeled ordered trees of finite height.  The article defines the category of expressions, which can be recursively defined by a scheme. The scheme contains a countable set of variables and a set of binary operators that contain all thirteen built-in lambda operators. It also defines the semantic domain for the semantics of expressions, where the result of the evaluation of arithmetic expressions is an integer value. The text also discusses the denotational semantics used to specify what object from the semantic domain corresponds to a given language construct. Finally, the text mentions that the denotational semantics give us a very abstract, high-level view on the behavior of programs.
+
+The syntax incorporates two categories — expressions, and statements.
+We can

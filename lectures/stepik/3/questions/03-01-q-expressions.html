@@ -1,0 +1,91 @@
+<h2>Abstract syntax</h2>
+
+We defined expression as
+
+a) Number
+b) Variable
+c) Binary operation of two expressions
+d) Assignment
+
+Answer: a), b) and c)
+
+
+What does the abstract syntax definition for expressions describe?
+
+a) The values that expressions can take
+b) The subordination between elementary constructs
+c) The different concrete syntaxes for expressions
+d) The semantic domain for the expressions
+Answer: b) The subordination between elementary constructs
+
+
+<h2>Concrete syntax</h2>
+
+What is the purpose of concrete syntax?
+a) It is a countable set of labeled ordered trees of finite height that describes subordination between elementary constructs.
+b) It specifies what object from the semantic domain corresponds to a given language construct.
+c) It represents expressions in some medium.
+d) It gives the semantics for a language formally.
+Answer: c)
+
+
+In the lesson we used lambda-function syntax to define some terms.
+Of course, these functions can be implemented in Kotlin.
+Connect the term with its implementation signature:
+
+a) State — fun f1(varName: String): Any
+b) Semantics of expression — fun f2(e: Expression, st: (String) -> Any): Int
+c) Data processing function: fun f3(d: Any) -> Any
+
+<h2>Denotational semantics</h2>
+
+We introduced several terms in this chapter. Connect the term with its definition.
+Note that definitions may be expressed differently from the ones mentioned in chapter.
+
+Structural induction — to prove something about a semantic of a construct, we first need to prove this about its base subconstructs, and then that it holds for all constructs one level higher.
+Determinism — Evaluating any expression in a given state delivers at most one value
+Compositionality — to define semantic of a complex construct, we use its subsconstructs
+
+
+Which of the following are the properties denotational semantics:
+false:
+— For any language it looks simple and natural
+— It requires advanced mathematical apparatus to describe any language
+— It gives very practical and concrete view of programs
+
+true:
+— For every language construct it specifies the object of semantic domain
+— It is one of many ways to show semantics of a language
+
+
+<h2>Strictness</h2>
+To better understand the properties of subexpressions, connect the subexpression to the proper property of the following initial expression: (x+2)*y
+
+<span class="math-tex">\(e^\prime \preceq e^\prime\otimes e \)</span> — (x+2)
+<span class="math-tex">\(e^\prime \preceq e\otimes e^\prime \)</span> — y
+<span class="math-tex">\(e\preceq e \)</span> — (x+2)*y
+<span class="math-tex">\(e^\prime\preceq e^{\prime\prime} \wedge e^{\prime\prime}\preceq e \Rightarrow e^\prime\preceq e \)</span> — 2
+
+
+For the state: <code>{z: 5, w: 3}</code> select expressions, which do not evaluate to the undefined state
+
+false:
+— 0*(z/0)
+— 5*(x/12)
+— z+x
+
+true:
+— 0*(w/12)
+— 1+w-w
+
+Introduction:
+The language consists of expressions and statements.
+In this chapter we will define the expressions and ways to write their syntax and semantics.
+Those ways are useful in the compiler creation, as they are representing the internal work of the compilers.
+We will also go through the properties of expressions, which will help us with analyzing the programs and prove statements about them.
+
+Summary:
+The syntax incorporates two categories — expressions, and statements.
+Expressions could be defined in an abstract syntax. But to implement them it is helpful to use concrete syntax.
+In the expressions we use variables, that's why we also need a state, which map of variable names to their values.
+The relation of subexpression helps to prove the properties of expressions and answer the questions about expression evaluation.
